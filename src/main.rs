@@ -26,9 +26,7 @@ fn main() {
         .map(Result::unwrap)
         .collect();
 
+    println!("{:?}", bd_pairs);
     let filtered_pairs = barcode::barcode_filter(bd_pairs, 1);
-
-    for bd in filtered_pairs {
-        println!("{:?}", bd);
-    }
+    println!("{:?}", filtered_pairs);
 }

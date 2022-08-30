@@ -24,15 +24,16 @@ fn get_value(n: &Node) -> &Event {
     }
 }
 
+// NOTE: This is opposite on purpose to flip to built in BinaryHeap
 impl Ord for Node {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         let me = get_value(self).value;
         let oth = get_value(other).value;
         if me < oth {
-            return std::cmp::Ordering::Less;
+            return std::cmp::Ordering::Greater;
         }
         if oth < me {
-            return std::cmp::Ordering::Greater;
+            return std::cmp::Ordering::Less;
         }
         return std::cmp::Ordering::Equal;
     }
@@ -100,7 +101,8 @@ pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: i32) -> Vec<BirthDeath> {
     let mut waiting = 0;
 
     while event_stack.len() > 0 {
-        let event = event_stack.pop().unwrap();
+        let mut event = event_stack.pop().unwrap();
+        println!("{:?}", event);
         match get_value(&event).event_type {
             EventType::Birth => {
                 // Check if in top-k and handle
@@ -112,6 +114,7 @@ pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: i32) -> Vec<BirthDeath> {
                 }
                 // Normal processing of value
                 nodes[event.id].alive = true;
+                event.alive = true;
                 sweep_status.push_back(event.id);
                 // Add the event back into to register its death_event
                 event_stack.push(event);
@@ -128,6 +131,7 @@ pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: i32) -> Vec<BirthDeath> {
                 if waiting > 0 {
                     let mut front_index = sweep_status.get(0);
                     while front_index != None && nodes[*front_index.unwrap()].is_dead {
+                        sweep_status.pop_front();
                         front_index = sweep_status.get(0);
                     }
                     // If queue has no canidate events move on
