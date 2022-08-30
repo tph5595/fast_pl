@@ -17,18 +17,40 @@ struct Node {
     is_dead: bool,
 }
 
-fn get_value(n: Node) -> Event {
+fn get_value(n: &Node) -> &Event {
     match n.alive {
-        true => n.death_event,
-        false => n.birth_event,
+        true => &n.death_event,
+        false => &n.birth_event,
     }
 }
 
 impl Ord for Node {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        (get_value(self).value, self.id).cmp(get_value(other).value, other.id)
+        let me = get_value(self).value;
+        let oth = get_value(other).value;
+        if me < oth {
+            return std::cmp::Ordering::Less;
+        }
+        if oth < me {
+            return std::cmp::Ordering::Greater;
+        }
+        return std::cmp::Ordering::Equal;
     }
 }
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for Node {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for Node {}
 
 #[derive(Debug)]
 struct Event {
@@ -64,5 +86,7 @@ fn generate_events(bd_pairs: Vec<BirthDeath>) -> Vec<Node> {
 
 pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: i32) -> Vec<BirthDeath> {
     let events = generate_events(bd_pairs);
-    let mut eventStack = BinaryHeap::from(events);
+    let mut event_stack = BinaryHeap::from(events);
+
+    return Vec::new();
 }
