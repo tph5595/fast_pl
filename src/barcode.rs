@@ -1,13 +1,13 @@
 use crate::birthdeath::BirthDeath;
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, VecDeque};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum EventType {
     Birth,
     Death,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Node {
     birth_event: Event,
     death_event: Event,
@@ -52,7 +52,7 @@ impl PartialEq for Node {
 
 impl Eq for Node {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Event {
     event_type: EventType,
     value: f32,
@@ -84,31 +84,65 @@ fn generate_events(bd_pairs: Vec<BirthDeath>) -> Vec<Node> {
         .collect::<Vec<_>>();
 }
 
-fn handle_birth(n: Node, event_stack: &mut BinaryHeap<Node>) -> BirthDeath {
+fn node_to_birthdeath(n: &Node) -> BirthDeath {
     return BirthDeath {
-        birth: 0.0,
-        death: 0.0,
-    };
-}
-fn handle_death(n: Node, event_stack: &mut BinaryHeap<Node>) -> BirthDeath {
-    return BirthDeath {
-        birth: 0.0,
-        death: 0.0,
+        birth: n.birth_event.value,
+        death: n.death_event.value,
     };
 }
 
 pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: i32) -> Vec<BirthDeath> {
-    let events = generate_events(bd_pairs);
-    let mut event_stack = &mut BinaryHeap::from(events);
-    let mut filtered_output = Vec::new();
+    let mut nodes = generate_events(bd_pairs);
+    let mut event_stack = BinaryHeap::from(nodes.to_vec());
+    let sweep_status: &mut VecDeque<usize> = &mut VecDeque::new();
+    let mut filtered_output: Vec<BirthDeath> = Vec::new();
+    let mut in_top = 0;
+    let mut waiting = 0;
 
     while event_stack.len() > 0 {
         let event = event_stack.pop().unwrap();
-        filtered_output.push(match get_value(&event).event_type {
-            EventType::Birth => handle_birth(event, event_stack),
-            EventType::Death => handle_death(event, event_stack),
-        })
+        match get_value(&event).event_type {
+            EventType::Birth => {
+                // Check if in top-k and handle
+                if in_top < k {
+                    in_top += 1;
+                    filtered_output.push(node_to_birthdeath(&event));
+                    // Mark so we know when it dies
+                    nodes[event.id].in_top_k = true;
+                }
+                // Normal processing of value
+                nodes[event.id].alive = true;
+                sweep_status.push_back(event.id);
+                // Add the event back into to register its death_event
+                event_stack.push(event);
+            }
+            EventType::Death => {
+                // mark as dead
+                nodes[event.id].is_dead = true;
+                // if was in top-k promote next canidate
+                // lazy add
+                if nodes[event.id].in_top_k {
+                    waiting += 1;
+                }
+                // check if next element should be in top k
+                if waiting > 0 {
+                    let mut front_index = sweep_status.get(0);
+                    while front_index != None && nodes[*front_index.unwrap()].is_dead {
+                        front_index = sweep_status.get(0);
+                    }
+                    // If queue has no canidate events move on
+                    if front_index == None {
+                        continue;
+                    }
+                    // Found a canidate, add it to top k
+                    let front = *front_index.unwrap();
+                    if !nodes[front].in_top_k {
+                        nodes[front].in_top_k = true;
+                        filtered_output.push(node_to_birthdeath(&nodes[front]));
+                    }
+                }
+            }
+        }
     }
-
     return filtered_output;
 }
