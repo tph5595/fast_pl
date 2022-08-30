@@ -84,9 +84,31 @@ fn generate_events(bd_pairs: Vec<BirthDeath>) -> Vec<Node> {
         .collect::<Vec<_>>();
 }
 
+fn handle_birth(n: Node, event_stack: &mut BinaryHeap<Node>) -> BirthDeath {
+    return BirthDeath {
+        birth: 0.0,
+        death: 0.0,
+    };
+}
+fn handle_death(n: Node, event_stack: &mut BinaryHeap<Node>) -> BirthDeath {
+    return BirthDeath {
+        birth: 0.0,
+        death: 0.0,
+    };
+}
+
 pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: i32) -> Vec<BirthDeath> {
     let events = generate_events(bd_pairs);
-    let mut event_stack = BinaryHeap::from(events);
+    let mut event_stack = &mut BinaryHeap::from(events);
+    let mut filtered_output = Vec::new();
 
-    return Vec::new();
+    while event_stack.len() > 0 {
+        let event = event_stack.pop().unwrap();
+        filtered_output.push(match get_value(&event).event_type {
+            EventType::Birth => handle_birth(event, event_stack),
+            EventType::Death => handle_death(event, event_stack),
+        })
+    }
+
+    return filtered_output;
 }
