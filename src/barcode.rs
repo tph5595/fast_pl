@@ -102,7 +102,6 @@ pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: i32) -> Vec<BirthDeath> {
 
     while event_stack.len() > 0 {
         let mut event = event_stack.pop().unwrap();
-        println!("{:?}", event);
         match get_value(&event).event_type {
             EventType::Birth => {
                 // Check if in top-k and handle

@@ -13,6 +13,8 @@ struct Args {
     /// Name of the file to read birth death pairs from
     #[clap(short, long, value_parser)]
     name: String,
+    #[clap(short, long, value_parser)]
+    debug: bool,
 }
 
 fn main() {
@@ -26,7 +28,11 @@ fn main() {
         .map(Result::unwrap)
         .collect();
 
-    println!("{:?}", bd_pairs);
+    if args.debug {
+        println!("{:?}", bd_pairs);
+    }
     let filtered_pairs = barcode::barcode_filter(bd_pairs, 1);
-    println!("{:?}", filtered_pairs);
+    if args.debug {
+        println!("{:?}", filtered_pairs);
+    }
 }
