@@ -194,7 +194,10 @@ fn handle_intersection(
     offset: i8,
 ) -> Option<Event> {
     let position = m1.position.expect("Mountain with event is dead");
-    // = status.get(mountains[event.parent_mountain_id].position + 1)
+    // Stop underflow of unsigned number
+    if position == 0 {
+        return None;
+    }
     let neighbor_index = match offset {
         1 => position + 1,
         -1 => position - 1,
@@ -216,6 +219,10 @@ fn handle_intersection(
 
 pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
     let landscapes = &mut Vec::with_capacity(k as usize);
+    (0..k).for_each(|_| {
+        let arr = Vec::new();
+        landscapes.push(arr);
+    });
     let mountains = &mut generate_mountains(bd_pairs);
     let events = &mut BinaryHeap::from(generate_initial_events(mountains.to_vec()));
     let status = &mut VecDeque::new();
@@ -284,10 +291,10 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
                 );
                 (lower.position, upper.position) = (upper.position, lower.position);
                 // Check for intersections
-                if let Some(new_event) = handle_intersection(status, lower, mountains, 1) {
+                if let Some(new_event) = handle_intersection(status, lower, mountains, -1) {
                     events.push(new_event);
                 }
-                if let Some(new_event) = handle_intersection(status, upper, mountains, -1) {
+                if let Some(new_event) = handle_intersection(status, upper, mountains, 1) {
                     events.push(new_event);
                 }
             }
