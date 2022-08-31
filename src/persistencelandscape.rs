@@ -29,13 +29,45 @@ enum EventType {
     Intersection,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy)]
 struct Event {
     value: PointOrd,
     event_type: EventType,
     parent_mountain_id: usize,
     parent_mountain2_id: Option<usize>,
 }
+
+// NOTE: This is opposite on purpose to flip to built in BinaryHeap
+impl Ord for Event {
+    // Compare points then event_type
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        if self.value < other.value {
+            return std::cmp::Ordering::Greater;
+        } else if other.value < self.value {
+            return std::cmp::Ordering::Less;
+        } else if self.event_type < other.event_type {
+            return std::cmp::Ordering::Greater;
+        } else if other.event_type < self.event_type {
+            return std::cmp::Ordering::Less;
+        }
+        return std::cmp::Ordering::Equal;
+    }
+}
+
+impl PartialOrd for Event {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for Event {
+    fn eq(&self, other: &Self) -> bool {
+        self.parent_mountain_id == other.parent_mountain_id
+            && self.parent_mountain2_id == other.parent_mountain2_id
+    }
+}
+
+impl Eq for Event {}
 
 fn create_mountain(birth: f32, death: f32, index: usize) -> PersistenceMountain {
     let half_dist = (death - birth) / 2.0;
