@@ -273,8 +273,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
                     landscapes,
                     k,
                 );
-                let (mut lower, mut upper) = match mountains[event.parent_mountain_id].slope_rising
-                {
+                let (lower, upper) = match mountains[event.parent_mountain_id].slope_rising {
                     true => (
                         mountains[event.parent_mountain_id],
                         mountains[event.parent_mountain2_id.unwrap()],
@@ -289,7 +288,8 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
                     lower.position.expect("Dead mountain in intersection event"),
                     upper.position.expect("Dead mountain in intersection event"),
                 );
-                (lower.position, upper.position) = (upper.position, lower.position);
+                (mountains[lower.id].position, mountains[upper.id].position) =
+                    (upper.position, lower.position);
                 // Check for intersections
                 if let Some(new_event) = handle_intersection(status, lower, mountains, -1) {
                     events.push(new_event);
