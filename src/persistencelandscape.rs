@@ -72,12 +72,11 @@ fn generate_initial_events(mountains: Vec<PersistenceMountain>) -> Vec<Event> {
         .into_iter()
         .map(
             |PersistenceMountain {
-                 position,
-                 slope_rising,
                  birth,
                  middle,
                  death,
                  id,
+                 ..
              }| {
                 vec![
                     Event {
@@ -235,10 +234,30 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
                     landscapes,
                     k,
                 );
-                // Ensure the intersection event is setup properly
-                assert!(mountains[event.parent_mountain_id].slope_rising == true);
+                let (mut lower, mut upper) = match mountains[event.parent_mountain_id].slope_rising
+                {
+                    true => (
+                        mountains[event.parent_mountain_id],
+                        mountains[event.parent_mountain2_id.unwrap()],
+                    ),
+                    false => (
+                        mountains[event.parent_mountain2_id.unwrap()],
+                        mountains[event.parent_mountain_id],
+                    ),
+                };
                 // Swap
+                status.swap(
+                    lower.position.expect("Dead mountain in intersection event"),
+                    upper.position.expect("Dead mountain in intersection event"),
+                );
+                (lower.position, upper.position) = (upper.position, lower.position);
                 // Check for intersections
+                if let Some(new_event) = handle_intersection(status, lower, mountains, 1) {
+                    events.push(new_event);
+                }
+                if let Some(new_event) = handle_intersection(status, upper, mountains, -1) {
+                    events.push(new_event);
+                }
             }
         }
     }
