@@ -13,7 +13,7 @@ struct Args {
     #[clap(short, long, value_parser)]
     name: String,
     #[clap(short, long, value_parser)]
-    k: i32,
+    k: usize,
     #[clap(short, long, value_parser)]
     debug: bool,
 }

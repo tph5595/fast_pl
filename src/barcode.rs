@@ -92,7 +92,7 @@ fn node_to_birthdeath(n: &Node) -> BirthDeath {
     };
 }
 
-pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: i32) -> Vec<BirthDeath> {
+pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<BirthDeath> {
     let mut nodes = generate_events(bd_pairs);
     let mut event_stack = BinaryHeap::from(nodes.to_vec());
     let sweep_status: &mut VecDeque<usize> = &mut VecDeque::new();

@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "3.2.18", features = ["derive"] }
+float-ord = "0.3.2"
+geo = "0.23.0"
