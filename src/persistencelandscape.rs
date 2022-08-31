@@ -17,8 +17,8 @@ struct PersistenceMountain {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PointOrd {
-    x: FloatOrd<f32>,
-    y: FloatOrd<f32>,
+    pub x: FloatOrd<f32>,
+    pub y: FloatOrd<f32>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

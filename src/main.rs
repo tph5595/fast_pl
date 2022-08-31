@@ -41,3 +41,37 @@ fn main() {
         println!("{:?}", landscape);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn basic() {
+        let k = 4;
+        let bd_pairs = vec![(0.0, 6.0), (1.0, 3.0), (2.0, 7.0)]
+            .into_iter()
+            .map(|(x, y)| birthdeath::BirthDeath { birth: x, death: y })
+            .collect();
+        let answer: Vec<Vec<persistencelandscape::PointOrd>> = vec![
+            vec![(0.0, 0.0), (3.0, 3.0), (4.0, 2.0), (4.5, 2.5), (7.0, 0.0)],
+            vec![(1.0, 0.0), (2.0, 1.0), (2.5, 0.5), (4.0, 2.0), (6.0, 0.0)],
+            vec![(2.0, 0.0), (2.5, 0.5), (3.0, 0.0)],
+            vec![],
+        ]
+        .into_iter()
+        .map(|x| {
+            x.into_iter()
+                .map(|(x, y)| persistencelandscape::PointOrd {
+                    x: float_ord::FloatOrd(x),
+                    y: float_ord::FloatOrd(y),
+                })
+                .collect()
+        })
+        .collect();
+
+        let filtered_pairs = barcode::barcode_filter(bd_pairs, k);
+        let landscape = persistencelandscape::generate(filtered_pairs, k);
+        assert!(answer == landscape);
+    }
+}
