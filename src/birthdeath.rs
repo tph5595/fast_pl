@@ -13,8 +13,8 @@ impl FromStr for BirthDeath {
         let (b, d) = s.split_once(",").unwrap();
 
         return Ok(BirthDeath {
-            birth: b.parse().unwrap(),
-            death: d.parse().unwrap(),
+            birth: b.trim().parse().unwrap(),
+            death: d.trim().parse().unwrap(),
         });
     }
 }
