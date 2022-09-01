@@ -21,6 +21,12 @@ pub struct PointOrd {
     pub y: FloatOrd<f32>,
 }
 
+#[derive(Debug, PartialEq)]
+enum Direction {
+    Above,
+    Below,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum EventType {
     Death,
@@ -191,17 +197,17 @@ fn handle_intersection(
     status: &mut VecDeque<usize>,
     m1: PersistenceMountain,
     mountains: &mut Vec<PersistenceMountain>,
-    offset: i8,
+    direction_to_check: Direction,
 ) -> Option<Event> {
     let position = m1.position.expect("Mountain with event is dead");
     // Stop underflow of unsigned number
-    if position == 0 {
+    if position == 0 && direction_to_check == Direction::Above {
         return None;
     }
-    let neighbor_index = match offset {
-        1 => position + 1,
-        -1 => position - 1,
-        _ => unreachable!("Can only look at neighbors in status"),
+    println!("about to check in intersection");
+    let neighbor_index = match direction_to_check {
+        Direction::Below => position + 1,
+        Direction::Above => position - 1,
     };
 
     if let Some(neighbor) = status.get(neighbor_index) {
@@ -228,6 +234,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
     let status = &mut VecDeque::new();
 
     while let Some(event) = events.pop() {
+        println!("{:?}", event);
         match event.event_type {
             EventType::Birth => {
                 // Add to status structure
@@ -237,9 +244,12 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
                 // Add to output if needed
                 log_to_landscape(mountains[event.parent_mountain_id], event, landscapes, k);
                 // Check for intersections
-                if let Some(new_event) =
-                    handle_intersection(status, mountains[event.parent_mountain_id], mountains, -1)
-                {
+                if let Some(new_event) = handle_intersection(
+                    status,
+                    mountains[event.parent_mountain_id],
+                    mountains,
+                    Direction::Above,
+                ) {
                     events.push(new_event);
                 }
             }
@@ -249,9 +259,12 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
                 // Add to ouput if needed
                 log_to_landscape(mountains[event.parent_mountain_id], event, landscapes, k);
                 // Check for intersections
-                if let Some(new_event) =
-                    handle_intersection(status, mountains[event.parent_mountain_id], mountains, 1)
-                {
+                if let Some(new_event) = handle_intersection(
+                    status,
+                    mountains[event.parent_mountain_id],
+                    mountains,
+                    Direction::Below,
+                ) {
                     events.push(new_event);
                 }
             }
@@ -263,23 +276,19 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
                 mountains[event.parent_mountain_id].position = None;
             }
             EventType::Intersection => {
+                let parent_mountain2_id = event
+                    .parent_mountain2_id
+                    .expect("Intersection event with no second mountain");
                 // Add to ouput if needed
                 log_to_landscape(mountains[event.parent_mountain_id], event, landscapes, k);
-                log_to_landscape(
-                    mountains[event
-                        .parent_mountain2_id
-                        .expect("Intersection event with no second mountain")],
-                    event,
-                    landscapes,
-                    k,
-                );
+                log_to_landscape(mountains[parent_mountain2_id], event, landscapes, k);
                 let (lower, upper) = match mountains[event.parent_mountain_id].slope_rising {
                     true => (
                         mountains[event.parent_mountain_id],
-                        mountains[event.parent_mountain2_id.unwrap()],
+                        mountains[parent_mountain2_id],
                     ),
                     false => (
-                        mountains[event.parent_mountain2_id.unwrap()],
+                        mountains[parent_mountain2_id],
                         mountains[event.parent_mountain_id],
                     ),
                 };
@@ -291,14 +300,19 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
                 (mountains[lower.id].position, mountains[upper.id].position) =
                     (upper.position, lower.position);
                 // Check for intersections
-                if let Some(new_event) = handle_intersection(status, lower, mountains, -1) {
+                if let Some(new_event) =
+                    handle_intersection(status, lower, mountains, Direction::Above)
+                {
                     events.push(new_event);
                 }
-                if let Some(new_event) = handle_intersection(status, upper, mountains, 1) {
+                if let Some(new_event) =
+                    handle_intersection(status, upper, mountains, Direction::Below)
+                {
                     events.push(new_event);
                 }
             }
         }
+        println!("{:?}", status);
     }
 
     return landscapes.to_vec();

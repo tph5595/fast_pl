@@ -1,8 +1,10 @@
 mod barcode;
 mod birthdeath;
 mod persistencelandscape;
+mod plot;
 
 use clap::Parser;
+use std::error::Error;
 use std::fs;
 
 /// Generates the PL for a set of birth death pairs
@@ -18,7 +20,7 @@ struct Args {
     debug: bool,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
     let bd_pairs: Vec<birthdeath::BirthDeath> = fs::read_to_string(args.name)
@@ -40,6 +42,7 @@ fn main() {
     if args.debug {
         println!("{:?}", landscape);
     }
+    return plot::plot_landscape(landscape);
 }
 
 #[cfg(test)]
