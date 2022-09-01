@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if args.debug {
         println!("{:?}", filtered_pairs);
     }
-    let landscape = persistencelandscape::generate(filtered_pairs, args.k);
+    let landscape = persistencelandscape::generate(filtered_pairs, args.k, args.debug);
     if args.debug {
         println!("{:?}", landscape);
     }

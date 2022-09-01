@@ -211,8 +211,6 @@ fn handle_intersection(
     };
 
     if let Some(neighbor) = status.get(neighbor_index) {
-        println!("There is neighbor for {:?}", position);
-        println!("{:?}", neighbor);
         if let Some(intersection) = intersects_with_neighbor(m1, mountains[*neighbor]) {
             return Some(Event {
                 value: intersection,
@@ -225,7 +223,7 @@ fn handle_intersection(
     return None;
 }
 
-pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
+pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<PointOrd>> {
     let landscapes = &mut Vec::with_capacity(k as usize);
     (0..k).for_each(|_| {
         let arr = Vec::new();
@@ -236,7 +234,9 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
     let status = &mut VecDeque::new();
 
     while let Some(event) = events.pop() {
-        println!("{:?}", event);
+        if debug {
+            println!("{:?}", event);
+        }
         match event.event_type {
             EventType::Birth => {
                 // Add to status structure
@@ -305,7 +305,6 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
                 if let Some(new_event) =
                     handle_intersection(status, mountains[lower.id], mountains, Direction::Above)
                 {
-                    println!("found intersection above after swap");
                     events.push(new_event);
                 }
                 if let Some(new_event) =
@@ -315,7 +314,9 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
                 }
             }
         }
-        println!("{:?}", status);
+        if debug {
+            println!("{:?}", status);
+        }
     }
 
     return landscapes.to_vec();
