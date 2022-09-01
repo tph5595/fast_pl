@@ -29,7 +29,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .expect("File not found")
         .trim()
         .lines()
-        .filter(|s| !s.contains("inf"))
+        .filter(|s| !s.contains("inf") && !s.is_empty())
         .map(str::parse)
         .map(Result::unwrap)
         .collect();
