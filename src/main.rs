@@ -18,13 +18,15 @@ struct Args {
     k: usize,
     #[clap(short, long, value_parser)]
     debug: bool,
+    #[clap(short, long, value_parser)]
+    graph: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
     let bd_pairs: Vec<birthdeath::BirthDeath> = fs::read_to_string(args.name)
-        .unwrap()
+        .expect("File not found")
         .trim()
         .lines()
         .map(str::parse)
@@ -42,7 +44,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     if args.debug {
         println!("{:?}", landscape);
     }
-    return plot::plot_landscape(landscape);
+    return match args.graph {
+        true => plot::plot_landscape(landscape),
+        false => Ok(()),
+    };
 }
 
 #[cfg(test)]

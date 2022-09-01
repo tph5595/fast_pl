@@ -204,7 +204,7 @@ fn handle_intersection(
     if position == 0 && direction_to_check == Direction::Above {
         return None;
     }
-    println!("about to check in intersection");
+    // println!("about to check in intersection");
     let neighbor_index = match direction_to_check {
         Direction::Below => position + 1,
         Direction::Above => position - 1,
@@ -234,7 +234,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
     let status = &mut VecDeque::new();
 
     while let Some(event) = events.pop() {
-        println!("{:?}", event);
+        // println!("{:?}", event);
         match event.event_type {
             EventType::Birth => {
                 // Add to status structure
@@ -312,7 +312,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
                 }
             }
         }
-        println!("{:?}", status);
+        // println!("{:?}", status);
     }
 
     return landscapes.to_vec();
