@@ -199,7 +199,7 @@ fn handle_intersection(
     mountains: &mut Vec<PersistenceMountain>,
     direction_to_check: Direction,
 ) -> Option<Event> {
-    let position = m1.position.expect("Mountain with event is dead");
+    let position = m1.position.expect("Intersection check for dead mountain");
     // Stop underflow of unsigned number
     if position == 0 && direction_to_check == Direction::Above {
         return None;
@@ -211,6 +211,8 @@ fn handle_intersection(
     };
 
     if let Some(neighbor) = status.get(neighbor_index) {
+        println!("There is neighbor for {:?}", position);
+        println!("{:?}", neighbor);
         if let Some(intersection) = intersects_with_neighbor(m1, mountains[*neighbor]) {
             return Some(Event {
                 value: intersection,
@@ -234,7 +236,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
     let status = &mut VecDeque::new();
 
     while let Some(event) = events.pop() {
-        // println!("{:?}", event);
+        println!("{:?}", event);
         match event.event_type {
             EventType::Birth => {
                 // Add to status structure
@@ -301,18 +303,19 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<Vec<PointOrd>> {
                     (upper.position, lower.position);
                 // Check for intersections
                 if let Some(new_event) =
-                    handle_intersection(status, lower, mountains, Direction::Above)
+                    handle_intersection(status, mountains[lower.id], mountains, Direction::Above)
                 {
+                    println!("found intersection above after swap");
                     events.push(new_event);
                 }
                 if let Some(new_event) =
-                    handle_intersection(status, upper, mountains, Direction::Below)
+                    handle_intersection(status, mountains[upper.id], mountains, Direction::Below)
                 {
                     events.push(new_event);
                 }
             }
         }
-        // println!("{:?}", status);
+        println!("{:?}", status);
     }
 
     return landscapes.to_vec();
