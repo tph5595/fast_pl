@@ -3,6 +3,7 @@ use float_ord::FloatOrd;
 use geo::{
     line_intersection::line_intersection, line_intersection::LineIntersection, Coordinate, Line,
 };
+use std::cmp::min;
 use std::collections::{BinaryHeap, VecDeque};
 
 #[derive(Debug, Clone, Copy)]
@@ -15,10 +16,27 @@ struct PersistenceMountain {
     id: usize,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PointOrd {
     pub x: FloatOrd<f32>,
     pub y: FloatOrd<f32>,
+}
+
+impl Ord for PointOrd {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        if self.x > other.x {
+            return std::cmp::Ordering::Greater;
+        } else if other.x > self.x {
+            return std::cmp::Ordering::Less;
+        }
+        return std::cmp::Ordering::Equal;
+    }
+}
+
+impl PartialOrd for PointOrd {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -29,10 +47,10 @@ enum Direction {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum EventType {
-    Death,
-    Birth,
-    Middle,
     Intersection,
+    Death,
+    Middle,
+    Birth,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -172,7 +190,7 @@ fn intersects_with_neighbor(m1: PersistenceMountain, m2: PersistenceMountain) ->
             intersection: Coordinate { x, y },
             is_proper: true,
         }) => Some(PointOrd {
-            x: FloatOrd(x),
+            x: min(FloatOrd(x), min(m1.death.x, m2.death.x)),
             y: FloatOrd(y),
         }),
         // Ignore all colinnear, not proper and no intersection results these will be resolved on
@@ -237,10 +255,21 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
         if debug {
             println!("{:?}", event);
         }
+        if status.len() > 2516 {
+            println!("================================================================");
+            println!("{:?}", event);
+            println!("{:?}", mountains[event.parent_mountain_id]);
+            if let Some(p2) = event.parent_mountain2_id {
+                println!("{:?}", mountains[p2]);
+            }
+            println!("Status Size: {:?}", status.len());
+        }
         match event.event_type {
             EventType::Birth => {
                 // Add to status structure
+                let start_len = status.len();
                 status.push_back(event.parent_mountain_id);
+                assert!(start_len + 1 == status.len());
                 let position = status.len() - 1;
                 mountains[event.parent_mountain_id].position = Some(position);
                 // Add to output if needed
@@ -252,6 +281,9 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                     mountains,
                     Direction::Above,
                 ) {
+                    if status.len() > 2516 {
+                        println!("Added Intersection: {:?}", new_event);
+                    }
                     events.push(new_event);
                 }
             }
@@ -271,16 +303,40 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                 }
             }
             EventType::Death => {
+                let pos = mountains[event.parent_mountain_id]
+                    .position
+                    .expect("Death of dead mountain");
+                let weird_q = &mut VecDeque::new();
+                if pos != status.len() - 1 {
+                    while pos < status.len() - 1 {
+                        weird_q.push_back(status.pop_back().unwrap());
+                    }
+                }
                 // Add to ouput if needed
                 log_to_landscape(mountains[event.parent_mountain_id], event, landscapes, k);
                 // remove and disable
                 status.pop_back();
                 mountains[event.parent_mountain_id].position = None;
+                while !weird_q.is_empty() {
+                    let element = weird_q.pop_back().unwrap();
+                    mountains[element].position = Some(mountains[element].position.unwrap() - 1);
+                    log_to_landscape(mountains[element], event, landscapes, k);
+                    status.push_back(element);
+                }
             }
             EventType::Intersection => {
                 let parent_mountain2_id = event
                     .parent_mountain2_id
                     .expect("Intersection event with no second mountain");
+                // Check for floating point mess up on death/intersection Ordering
+                // let mut normal = true;
+                // if event.value.x == mountains[event.parent_mountain_id].death.x
+                //     || event.value.x == mountains[parent_mountain2_id].death.x
+                // {
+                //     println!("Intersection on death. Ignoring");
+                //     normal = false;
+                // }
+                // if normal {
                 // Add to ouput if needed
                 log_to_landscape(mountains[event.parent_mountain_id], event, landscapes, k);
                 log_to_landscape(mountains[parent_mountain2_id], event, landscapes, k);
@@ -296,8 +352,8 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                 };
                 // Swap
                 status.swap(
-                    lower.position.expect("Dead mountain in intersection event"),
                     upper.position.expect("Dead mountain in intersection event"),
+                    lower.position.expect("Dead mountain in intersection event"),
                 );
                 (mountains[lower.id].position, mountains[upper.id].position) =
                     (upper.position, lower.position);
@@ -305,17 +361,34 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                 if let Some(new_event) =
                     handle_intersection(status, mountains[lower.id], mountains, Direction::Above)
                 {
+                    if status.len() > 2516 {
+                        println!("Added Intersection: {:?}", new_event);
+                    }
                     events.push(new_event);
                 }
                 if let Some(new_event) =
                     handle_intersection(status, mountains[upper.id], mountains, Direction::Below)
                 {
+                    if status.len() > 2516 {
+                        println!("Added Intersection: {:?}", new_event);
+                    }
                     events.push(new_event);
                 }
+                // } else {
+                //     if mountains[event.parent_mountain_id].position != None {
+                //         // panic!("Does this get called");
+                //         mountains[event.parent_mountain_id].position =
+                //             Some(mountains[event.parent_mountain_id].position.unwrap() - 1);
+                //     } else {
+                //         mountains[parent_mountain2_id].position =
+                //             Some(mountains[parent_mountain2_id].position.unwrap() - 1);
+                //     }
+                // }
             }
         }
         if debug {
             println!("{:?}", status);
+            println!("================================================================");
         }
     }
 
