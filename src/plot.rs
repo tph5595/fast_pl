@@ -2,7 +2,11 @@ use crate::persistencelandscape::PointOrd;
 use float_ord::FloatOrd;
 use plotters::prelude::*;
 
-pub fn plot_landscape(landscape: Vec<Vec<PointOrd>>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn plot_landscape(
+    landscape: Vec<Vec<PointOrd>>,
+    height: u32,
+    width: u32,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Set up the data
     let to_plot: Vec<Vec<(f32, f32)>> = landscape
         .into_iter()
@@ -41,7 +45,7 @@ pub fn plot_landscape(landscape: Vec<Vec<PointOrd>>) -> Result<(), Box<dyn std::
         .max()
         .unwrap()
         .0;
-    let root = BitMapBackend::new("output.png", (640, 480)).into_drawing_area();
+    let root = BitMapBackend::new("output.png", (width, height)).into_drawing_area();
     match root.fill(&WHITE) {
         Ok(_) => (),
         _ => {

@@ -255,15 +255,6 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
         if debug {
             println!("{:?}", event);
         }
-        if status.len() > 2516 {
-            println!("================================================================");
-            println!("{:?}", event);
-            println!("{:?}", mountains[event.parent_mountain_id]);
-            if let Some(p2) = event.parent_mountain2_id {
-                println!("{:?}", mountains[p2]);
-            }
-            println!("Status Size: {:?}", status.len());
-        }
         match event.event_type {
             EventType::Birth => {
                 // Add to status structure
@@ -281,9 +272,6 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                     mountains,
                     Direction::Above,
                 ) {
-                    if status.len() > 2516 {
-                        println!("Added Intersection: {:?}", new_event);
-                    }
                     events.push(new_event);
                 }
             }
@@ -306,6 +294,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                 let pos = mountains[event.parent_mountain_id]
                     .position
                     .expect("Death of dead mountain");
+                // Check for floating point mess up on death/intersection Ordering
                 let weird_q = &mut VecDeque::new();
                 if pos != status.len() - 1 {
                     while pos < status.len() - 1 {
@@ -328,15 +317,6 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                 let parent_mountain2_id = event
                     .parent_mountain2_id
                     .expect("Intersection event with no second mountain");
-                // Check for floating point mess up on death/intersection Ordering
-                // let mut normal = true;
-                // if event.value.x == mountains[event.parent_mountain_id].death.x
-                //     || event.value.x == mountains[parent_mountain2_id].death.x
-                // {
-                //     println!("Intersection on death. Ignoring");
-                //     normal = false;
-                // }
-                // if normal {
                 // Add to ouput if needed
                 log_to_landscape(mountains[event.parent_mountain_id], event, landscapes, k);
                 log_to_landscape(mountains[parent_mountain2_id], event, landscapes, k);
@@ -361,29 +341,13 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                 if let Some(new_event) =
                     handle_intersection(status, mountains[lower.id], mountains, Direction::Above)
                 {
-                    if status.len() > 2516 {
-                        println!("Added Intersection: {:?}", new_event);
-                    }
                     events.push(new_event);
                 }
                 if let Some(new_event) =
                     handle_intersection(status, mountains[upper.id], mountains, Direction::Below)
                 {
-                    if status.len() > 2516 {
-                        println!("Added Intersection: {:?}", new_event);
-                    }
                     events.push(new_event);
                 }
-                // } else {
-                //     if mountains[event.parent_mountain_id].position != None {
-                //         // panic!("Does this get called");
-                //         mountains[event.parent_mountain_id].position =
-                //             Some(mountains[event.parent_mountain_id].position.unwrap() - 1);
-                //     } else {
-                //         mountains[parent_mountain2_id].position =
-                //             Some(mountains[parent_mountain2_id].position.unwrap() - 1);
-                //     }
-                // }
             }
         }
         if debug {

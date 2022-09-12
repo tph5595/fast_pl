@@ -14,10 +14,19 @@ struct Args {
     /// Name of the file to read birth death pairs from
     #[clap(short, long, value_parser)]
     name: String,
-    #[clap(short, long, value_parser)]
+    /// Max kth-landscape to calculate
+    #[clap(short, long, value_parser, default_value_t = 1)]
     k: usize,
+    /// Height of output image
+    #[clap(short, long, value_parser, default_value_t = 640)]
+    height: u32,
+    /// Width of output image
+    #[clap(short, long, value_parser, default_value_t = 480)]
+    width: u32,
+    /// Enable debug messages
     #[clap(short, long, value_parser)]
     debug: bool,
+    /// Save output image
     #[clap(short, long, value_parser)]
     graph: bool,
 }
@@ -46,7 +55,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("{:?}", landscape);
     }
     return match args.graph {
-        true => plot::plot_landscape(landscape),
+        true => plot::plot_landscape(landscape, args.height, args.width),
         false => Ok(()),
     };
 }
