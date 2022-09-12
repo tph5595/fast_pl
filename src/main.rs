@@ -18,10 +18,10 @@ struct Args {
     #[clap(short, long, value_parser, default_value_t = 1)]
     k: usize,
     /// Height of output image
-    #[clap(short, long, value_parser, default_value_t = 640)]
+    #[clap(short, long, value_parser, default_value_t = 720)]
     height: u32,
     /// Width of output image
-    #[clap(short, long, value_parser, default_value_t = 480)]
+    #[clap(short, long, value_parser, default_value_t = 1280)]
     width: u32,
     /// Enable debug messages
     #[clap(short, long, value_parser)]
