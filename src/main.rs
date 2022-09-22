@@ -47,13 +47,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("{:?}", bd_pairs);
     }
     let filtered_pairs = barcode::barcode_filter(bd_pairs, args.k);
-    // if args.debug {
-    //     println!("{:?}", filtered_pairs);
-    // }
+    if args.debug {
+        println!("{:?}", filtered_pairs);
+    }
     let landscape = persistencelandscape::generate(filtered_pairs, args.k, args.debug);
-    // if args.debug {
-    //     println!("{:?}", landscape);
-    // }
+    if args.debug {
+        println!("{:?}", landscape);
+    }
     return match args.graph {
         true => plot::plot_landscape(landscape, args.height, args.width),
         false => Ok(()),

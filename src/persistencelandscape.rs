@@ -186,7 +186,6 @@ fn intersects_with_neighbor(m1: PersistenceMountain, m2: PersistenceMountain) ->
         return None;
     }
     let inter = line_intersection(create_line_segment(m1), create_line_segment(m2));
-    println!("{:?}", inter);
     match inter {
         Some(LineIntersection::SinglePoint {
             intersection: Coordinate { x, y },
@@ -224,7 +223,6 @@ fn handle_intersection(
     if position == 0 && direction_to_check == Direction::Above {
         return None;
     }
-    // println!("about to check in intersection");
     let neighbor_index = match direction_to_check {
         Direction::Below => position + 1,
         Direction::Above => position - 1,
@@ -328,7 +326,6 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                     mountains,
                     Direction::Below,
                 ) {
-                    println!("Found Intersection");
                     events.push(new_event);
                 }
             }
@@ -366,7 +363,6 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                 }
             }
             EventType::Intersection => {
-                println!("Intersection");
                 let parent_mountain2_id = event
                     .parent_mountain2_id
                     .expect("Intersection event with no second mountain");
