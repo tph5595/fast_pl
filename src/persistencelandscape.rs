@@ -185,10 +185,12 @@ fn intersects_with_neighbor(m1: PersistenceMountain, m2: PersistenceMountain) ->
     if m1.slope_rising == m2.slope_rising {
         return None;
     }
-    return match line_intersection(create_line_segment(m1), create_line_segment(m2)) {
+    let inter = line_intersection(create_line_segment(m1), create_line_segment(m2));
+    println!("{:?}", inter);
+    match inter {
         Some(LineIntersection::SinglePoint {
             intersection: Coordinate { x, y },
-            is_proper: true,
+            ..
         }) => Some(PointOrd {
             x: min(FloatOrd(x), min(m1.death.x, m2.death.x)),
             y: FloatOrd(y),
@@ -196,18 +198,18 @@ fn intersects_with_neighbor(m1: PersistenceMountain, m2: PersistenceMountain) ->
         // Ignore all colinnear, not proper and no intersection results these will be resolved on
         // slope change or do not matter
         _ => None,
-    };
+    }
 }
 
 fn log_to_landscape(
     mountain: PersistenceMountain,
-    event: Event,
+    value: PointOrd,
     landscapes: &mut Vec<Vec<PointOrd>>,
     k: usize,
 ) {
     let position = mountain.position.expect("Mountain with event is dead");
     if position < k {
-        landscapes[position].push(event.value);
+        landscapes[position].push(value);
     }
 }
 
@@ -241,6 +243,35 @@ fn handle_intersection(
     return None;
 }
 
+fn mountain_at_point(mountain: PersistenceMountain, x: FloatOrd<f32>) -> PointOrd {
+    if mountain.birth.x > x || mountain.death.x < x {
+        // Mountain not alive at point
+        return PointOrd {
+            x,
+            y: FloatOrd(0.0),
+        };
+    }
+    if mountain.middle.x < x {
+        // Handle using first segment
+        return PointOrd {
+            x,
+            y: FloatOrd(x.0 - mountain.birth.x.0),
+        };
+    } else if mountain.middle.x < x {
+        // Handle using second segment
+        return PointOrd {
+            x,
+            y: FloatOrd(mountain.death.x.0 - x.0),
+        };
+    } else {
+        // Intersection is at peak
+        return PointOrd {
+            x,
+            y: mountain.middle.y,
+        };
+    }
+}
+
 pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<PointOrd>> {
     let landscapes = &mut Vec::with_capacity(k as usize);
     (0..k).for_each(|_| {
@@ -264,7 +295,12 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                 let position = status.len() - 1;
                 mountains[event.parent_mountain_id].position = Some(position);
                 // Add to output if needed
-                log_to_landscape(mountains[event.parent_mountain_id], event, landscapes, k);
+                log_to_landscape(
+                    mountains[event.parent_mountain_id],
+                    event.value,
+                    landscapes,
+                    k,
+                );
                 // Check for intersections
                 if let Some(new_event) = handle_intersection(
                     status,
@@ -279,7 +315,12 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                 // Update status structures
                 mountains[event.parent_mountain_id].slope_rising = false;
                 // Add to ouput if needed
-                log_to_landscape(mountains[event.parent_mountain_id], event, landscapes, k);
+                log_to_landscape(
+                    mountains[event.parent_mountain_id],
+                    event.value,
+                    landscapes,
+                    k,
+                );
                 // Check for intersections
                 if let Some(new_event) = handle_intersection(
                     status,
@@ -287,6 +328,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                     mountains,
                     Direction::Below,
                 ) {
+                    println!("Found Intersection");
                     events.push(new_event);
                 }
             }
@@ -302,24 +344,40 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                     }
                 }
                 // Add to ouput if needed
-                log_to_landscape(mountains[event.parent_mountain_id], event, landscapes, k);
+                log_to_landscape(
+                    mountains[event.parent_mountain_id],
+                    event.value,
+                    landscapes,
+                    k,
+                );
                 // remove and disable
                 status.pop_back();
                 mountains[event.parent_mountain_id].position = None;
                 while !weird_q.is_empty() {
                     let element = weird_q.pop_back().unwrap();
                     mountains[element].position = Some(mountains[element].position.unwrap() - 1);
-                    log_to_landscape(mountains[element], event, landscapes, k);
+                    log_to_landscape(
+                        mountains[element],
+                        mountain_at_point(mountains[element], event.value.x),
+                        landscapes,
+                        k,
+                    );
                     status.push_back(element);
                 }
             }
             EventType::Intersection => {
+                println!("Intersection");
                 let parent_mountain2_id = event
                     .parent_mountain2_id
                     .expect("Intersection event with no second mountain");
                 // Add to ouput if needed
-                log_to_landscape(mountains[event.parent_mountain_id], event, landscapes, k);
-                log_to_landscape(mountains[parent_mountain2_id], event, landscapes, k);
+                log_to_landscape(
+                    mountains[event.parent_mountain_id],
+                    event.value,
+                    landscapes,
+                    k,
+                );
+                log_to_landscape(mountains[parent_mountain2_id], event.value, landscapes, k);
                 let (lower, upper) = match mountains[event.parent_mountain_id].slope_rising {
                     true => (
                         mountains[event.parent_mountain_id],
