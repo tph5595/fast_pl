@@ -42,6 +42,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(str::parse)
         .map(Result::unwrap)
         .collect();
+    if bd_pairs.len() == 0 {
+        unreachable!("No BirthDeath pairs found in file");
+    }
 
     if args.debug {
         println!("{:?}", bd_pairs);
