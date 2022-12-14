@@ -1,8 +1,6 @@
 use crate::birthdeath::BirthDeath;
 use float_ord::FloatOrd;
-use geo::{
-    line_intersection::line_intersection, line_intersection::LineIntersection, Coordinate, Line,
-};
+use geo::{line_intersection::line_intersection, line_intersection::LineIntersection, Coord, Line};
 use std::cmp::min;
 use std::collections::{BinaryHeap, VecDeque};
 
@@ -188,7 +186,7 @@ fn intersects_with_neighbor(m1: PersistenceMountain, m2: PersistenceMountain) ->
     let inter = line_intersection(create_line_segment(m1), create_line_segment(m2));
     match inter {
         Some(LineIntersection::SinglePoint {
-            intersection: Coordinate { x, y },
+            intersection: Coord { x, y },
             ..
         }) => Some(PointOrd {
             x: min(FloatOrd(x), min(m1.death.x, m2.death.x)),
