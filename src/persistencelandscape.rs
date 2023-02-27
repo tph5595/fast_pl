@@ -277,10 +277,17 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
         landscapes.push(arr);
     });
     let mountains = &mut generate_mountains(bd_pairs);
-    let events = &mut BinaryHeap::from(generate_initial_events(mountains.to_vec()));
+    let events_base = &mut BinaryHeap::from(generate_initial_events(mountains.to_vec()));
+    let events_int = &mut BinaryHeap::from(vec![]);
     let status = &mut VecDeque::new();
 
-    while let Some(event) = events.pop() {
+    while events_base.len() + events_int.len() > 0 {
+        // Opposite on purpose due to cmp from bin heap
+        let event = if events_base.peek() < events_int.peek(){
+            events_int.pop().unwrap()
+        }else{
+            events_base.pop().unwrap()
+        };
         if debug {
             println!("{:?}", event);
         }
@@ -306,7 +313,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                     mountains,
                     Direction::Above,
                 ) {
-                    events.push(new_event);
+                    events_int.push(new_event);
                 }
             }
             EventType::Middle => {
@@ -326,7 +333,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                     mountains,
                     Direction::Below,
                 ) {
-                    events.push(new_event);
+                    events_int.push(new_event);
                 }
             }
             EventType::Death => {
@@ -395,12 +402,12 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                 if let Some(new_event) =
                     handle_intersection(status, mountains[lower.id], mountains, Direction::Above)
                 {
-                    events.push(new_event);
+                    events_int.push(new_event);
                 }
                 if let Some(new_event) =
                     handle_intersection(status, mountains[upper.id], mountains, Direction::Below)
                 {
-                    events.push(new_event);
+                    events_int.push(new_event);
                 }
             }
         }
