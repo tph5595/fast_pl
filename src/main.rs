@@ -4,6 +4,7 @@ mod persistencelandscape;
 mod plot;
 
 use clap::Parser;
+use csv::Writer;
 use std::error::Error;
 use std::fs;
 
@@ -29,6 +30,9 @@ struct Args {
     /// Save output image
     #[clap(short, long, value_parser)]
     graph: bool,
+    /// Save to CSV
+    #[clap(short, long, value_parser, default_value = "output.csv")]
+    csv: String,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -43,7 +47,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(Result::unwrap)
         .collect();
     if bd_pairs.len() == 0 {
-        unreachable!("No BirthDeath pairs found in file");
+        if args.debug {
+            println!("No BirthDeath pairs found in file");
+        }
+        return Ok(());
     }
 
     if args.debug {
@@ -57,6 +64,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     if args.debug {
         println!("{:?}", landscape);
     }
+    let mut wtr = Writer::from_path(args.csv)?;
+    for landscape in &landscape {
+        for point in landscape {
+            wtr.write_record(&[point.x.0.to_string(), point.y.0.to_string()])?;
+        }
+        wtr.write_record(&["", ""])?;
+    }
+    wtr.flush()?;
     return match args.graph {
         true => plot::plot_landscape(landscape, args.height, args.width),
         false => Ok(()),

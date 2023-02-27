@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "3.2.18", features = ["derive"] }
+csv = "1.1.6"
 float-ord = "0.3.2"
 geo = "0.23.0"
 plotters = "0.3.4"
