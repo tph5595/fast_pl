@@ -1,6 +1,6 @@
 [package]
 name = "rpls"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -9,4 +9,5 @@ edition = "2021"
 clap = { version = "3.2.18", features = ["derive"] }
 float-ord = "0.3.2"
 geo = "0.23.0"
-plotters = "0.3.3"
+plotters = "0.3.4"
+geo-types = "0.7.8"
