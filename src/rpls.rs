@@ -47,3 +47,7 @@ pub fn l2_norm(landscapes: Vec<Vec<persistencelandscape::PointOrd>>) -> f32 {
         .map(|landscape| landscape_norm(landscape))
         .sum()
 }
+
+pub fn pairs_to_l2_norm(bd_paris: Vec<BirthDeath>, k:usize, debug:bool) -> f32{
+    l2_norm(pairs_to_landscape(bd_paris, k, debug).unwrap())
+}
