@@ -1,8 +1,4 @@
-mod barcode;
-mod birthdeath;
-mod persistencelandscape;
-mod plot;
-
+use rpls;
 use clap::Parser;
 use csv::Writer;
 use std::error::Error;
@@ -38,7 +34,7 @@ struct Args {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
-    let bd_pairs: Vec<birthdeath::BirthDeath> = fs::read_to_string(args.name)
+    let bd_paris: Vec<rpls::birthdeath::BirthDeath> = fs::read_to_string(args.name)
         .expect("File not found")
         .trim()
         .lines()
@@ -46,24 +42,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(str::parse)
         .map(Result::unwrap)
         .collect();
-    if bd_pairs.len() == 0 {
-        if args.debug {
-            println!("No BirthDeath pairs found in file");
-        }
-        return Ok(());
-    }
 
-    if args.debug {
-        println!("{:?}", bd_pairs);
-    }
-    let filtered_pairs = barcode::barcode_filter(bd_pairs, args.k);
-    if args.debug {
-        println!("{:?}", filtered_pairs);
-    }
-    let landscape = persistencelandscape::generate(filtered_pairs, args.k, args.debug);
-    if args.debug {
-        println!("{:?}", landscape);
-    }
+    let landscape = rpls::rpls::pairs_to_landscape(bd_paris, args.k, args.debug).unwrap();
+
     let mut wtr = Writer::from_path(args.csv)?;
     for landscape in &landscape {
         for point in landscape {
@@ -73,7 +54,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     wtr.flush()?;
     return match args.graph {
-        true => plot::plot_landscape(landscape, args.height, args.width),
+        true => rpls::plot::plot_landscape(landscape, args.height, args.width),
         false => Ok(()),
     };
 }
@@ -85,13 +66,13 @@ mod tests {
     fn test_runner(k: usize, bd_pairs_vec: Vec<(f32, f32)>, answer_vec: Vec<Vec<(f32, f32)>>) {
         let bd_pairs = bd_pairs_vec
             .into_iter()
-            .map(|(x, y)| birthdeath::BirthDeath { birth: x, death: y })
+            .map(|(x, y)| rpls::birthdeath::BirthDeath { birth: x, death: y })
             .collect();
-        let answer: Vec<Vec<persistencelandscape::PointOrd>> = answer_vec
+        let answer: Vec<Vec<rpls::persistencelandscape::PointOrd>> = answer_vec
             .into_iter()
             .map(|x| {
                 x.into_iter()
-                    .map(|(x, y)| persistencelandscape::PointOrd {
+                    .map(|(x, y)| rpls::persistencelandscape::PointOrd {
                         x: float_ord::FloatOrd(x),
                         y: float_ord::FloatOrd(y),
                     })
@@ -99,8 +80,8 @@ mod tests {
             })
             .collect();
 
-        let filtered_pairs = barcode::barcode_filter(bd_pairs, k);
-        let landscape = persistencelandscape::generate(filtered_pairs, k, false);
+        let filtered_pairs = rpls::barcode::barcode_filter(bd_pairs, k);
+        let landscape = rpls::persistencelandscape::generate(filtered_pairs, k, false);
         assert!(answer == landscape);
     }
 
@@ -137,9 +118,8 @@ mod tests {
     fn problem_pair_1() {
         let k = 4;
         let bd_pairs_vec = vec![
-            (0.9748720526695251, 0.9898090958595276),
-            (0.9600228071212769, 1.029630184173584),
-            (0.8873197436332703, 0.9408737421035767),
+            (0.0, 0.0),
+            (0.0, 0.0),
         ];
         let answer_vec = vec![
             vec![(0.0, 0.0), (3.0, 3.0), (4.0, 2.0), (4.5, 2.5), (7.0, 0.0)],

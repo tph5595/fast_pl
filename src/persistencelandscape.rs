@@ -270,18 +270,23 @@ fn mountain_at_point(mountain: PersistenceMountain, x: FloatOrd<f32>) -> PointOr
     }
 }
 
-pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<PointOrd>> {
-    let landscapes = &mut Vec::with_capacity(k as usize);
+pub fn empty_landscape(k: usize) -> Vec<Vec<PointOrd>>{
+    let mut landscapes = Vec::with_capacity(k as usize);
     (0..k).for_each(|_| {
         let arr = Vec::new();
         landscapes.push(arr);
     });
+    return landscapes;
+}
+
+pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<PointOrd>> {
+    let landscapes = &mut empty_landscape(k);
     let mountains = &mut generate_mountains(bd_pairs);
     let events_base = &mut BinaryHeap::from(generate_initial_events(mountains.to_vec()));
     let events_int = &mut BinaryHeap::from(vec![]);
     let status = &mut VecDeque::new();
 
-    while events_base.len() + events_int.len() > 0 {
+    while events_base.len() > 0 || events_int.len() > 0 {
         // Opposite on purpose due to cmp from bin heap
         let event = if events_base.peek() < events_int.peek(){
             events_int.pop().unwrap()
