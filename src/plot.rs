@@ -13,38 +13,18 @@ pub fn plot_landscape(
         .map(|s| s.into_iter().map(|PointOrd { x, y }| (x.0, y.0)).collect())
         .collect();
     // Get bounds
-    let lower_bound_x = to_plot
+    let (x_lower, x_upper, y_lower, y_upper) = to_plot
         .iter()
-        .cloned()
         .flatten()
-        .flat_map(|(x, ..)| [FloatOrd(x)])
-        .min()
-        .unwrap()
-        .0;
-    let upper_bound_x = to_plot
-        .iter()
         .cloned()
-        .flatten()
-        .flat_map(|(x, ..)| [FloatOrd(x)])
-        .max()
-        .unwrap()
-        .0;
-    let lower_bound_y = to_plot
-        .iter()
-        .cloned()
-        .flatten()
-        .flat_map(|(.., y)| [FloatOrd(y)])
-        .min()
-        .unwrap()
-        .0;
-    let upper_bound_y = to_plot
-        .iter()
-        .cloned()
-        .flatten()
-        .flat_map(|(.., y)| [FloatOrd(y)])
-        .max()
-        .unwrap()
-        .0;
+        .flat_map(|(x, y)| [(FloatOrd(x), FloatOrd(y))])
+        .fold((FloatOrd(0.0), FloatOrd(0.0), FloatOrd(0.0), FloatOrd(0.0)), 
+              |bounds, (x, y)| 
+              (bounds.0.min(x),
+               bounds.1.max(x),
+               bounds.2.min(y),
+               bounds.3.max(y),
+               ));
     let root = BitMapBackend::new("output.png", (width, height)).into_drawing_area();
     match root.fill(&WHITE) {
         Ok(_) => (),
@@ -59,7 +39,7 @@ pub fn plot_landscape(
         .x_label_area_size(20)
         .y_label_area_size(40)
         // Finally attach a coordinate on the drawing area and make a chart context
-        .build_cartesian_2d(lower_bound_x..upper_bound_x, lower_bound_y..upper_bound_y)
+        .build_cartesian_2d(x_lower.0..x_upper.0, y_lower.0..y_upper.0)
         .unwrap();
 
     // Then we can draw a mesh
