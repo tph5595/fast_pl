@@ -24,12 +24,7 @@ pub struct PointOrd {
 
 impl Ord for PointOrd {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        if self.x > other.x {
-            return std::cmp::Ordering::Greater;
-        } else if other.x > self.x {
-            return std::cmp::Ordering::Less;
-        }
-        return std::cmp::Ordering::Equal;
+         self.x.cmp(&other.x)
     }
 }
 
@@ -65,16 +60,10 @@ struct Event {
 impl Ord for Event {
     // Compare points then event_type
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        if self.value < other.value {
-            return std::cmp::Ordering::Greater;
-        } else if other.value < self.value {
-            return std::cmp::Ordering::Less;
-        } else if self.event_type < other.event_type {
-            return std::cmp::Ordering::Greater;
-        } else if other.event_type < self.event_type {
-            return std::cmp::Ordering::Less;
+        if self.value == other.value{
+            return self.event_type.cmp(&other.event_type).reverse();
         }
-        return std::cmp::Ordering::Equal;
+        self.value.cmp(&other.value).reverse()
     }
 }
 
@@ -95,7 +84,8 @@ impl Eq for Event {}
 
 fn create_mountain(birth: f32, death: f32, index: usize) -> PersistenceMountain {
     let half_dist = (death - birth) / 2.0;
-    return PersistenceMountain {
+
+    PersistenceMountain {
         position: None,
         slope_rising: true,
         birth: PointOrd {
@@ -111,22 +101,22 @@ fn create_mountain(birth: f32, death: f32, index: usize) -> PersistenceMountain 
             y: FloatOrd(0.0),
         },
         id: index,
-    };
+    }
 }
 
 fn generate_mountains(bd_pairs: Vec<BirthDeath>) -> Vec<PersistenceMountain> {
-    return bd_pairs
+    bd_pairs
         .into_iter()
         .filter(|BirthDeath { birth, death }| death.is_finite() && birth.is_finite())
         .enumerate()
         .map(|(i, BirthDeath { birth, death })| create_mountain(birth, death, i))
-        .collect::<Vec<_>>();
+        .collect::<Vec<_>>()
 }
 
 fn generate_initial_events(mountains: Vec<PersistenceMountain>) -> Vec<Event> {
-    return mountains
+    mountains
         .into_iter()
-        .map(
+        .flat_map(
             |PersistenceMountain {
                  birth,
                  middle,
@@ -156,29 +146,28 @@ fn generate_initial_events(mountains: Vec<PersistenceMountain>) -> Vec<Event> {
                 ]
             },
         )
-        .flatten()
-        .collect();
+        .collect()
 }
 
 fn current_segment_start(mountain: PersistenceMountain) -> (f32, f32) {
-    return match mountain.slope_rising {
+    match mountain.slope_rising {
         true => (mountain.birth.x.0, mountain.birth.y.0),
         false => (mountain.middle.x.0, mountain.middle.y.0),
-    };
+    }
 }
 
 fn current_segment_end(mountain: PersistenceMountain) -> (f32, f32) {
-    return match mountain.slope_rising {
+    match mountain.slope_rising {
         true => (mountain.middle.x.0, mountain.middle.y.0),
         false => (mountain.death.x.0, mountain.death.y.0),
-    };
+    }
 }
 
 fn create_line_segment(mountain: PersistenceMountain) -> Line<f32> {
-    return Line {
+    Line {
         start: current_segment_start(mountain).into(),
         end: current_segment_end(mountain).into(),
-    };
+    }
 }
 
 fn intersects_with_neighbor(m1: PersistenceMountain, m2: PersistenceMountain) -> Option<PointOrd> {
@@ -203,7 +192,7 @@ fn intersects_with_neighbor(m1: PersistenceMountain, m2: PersistenceMountain) ->
 fn log_to_landscape(
     mountain: PersistenceMountain,
     value: PointOrd,
-    landscapes: &mut Vec<Vec<PointOrd>>,
+    landscapes: &mut [Vec<PointOrd>],
     k: usize,
 ) {
     let position = mountain.position.expect("Mountain with event is dead");
@@ -215,7 +204,7 @@ fn log_to_landscape(
 fn handle_intersection(
     status: &mut VecDeque<usize>,
     m1: PersistenceMountain,
-    mountains: &mut Vec<PersistenceMountain>,
+    mountains: &mut [PersistenceMountain],
     direction_to_check: Direction,
 ) -> Option<Event> {
     let position = m1.position.expect("Intersection check for dead mountain");
@@ -238,16 +227,16 @@ fn handle_intersection(
             });
         }
     }
-    return None;
+    None
 }
 
 pub fn empty_landscape(k: usize) -> Vec<Vec<PointOrd>>{
-    let mut landscapes = Vec::with_capacity(k as usize);
+    let mut landscapes = Vec::with_capacity(k);
     (0..k).for_each(|_| {
         let arr = Vec::new();
         landscapes.push(arr);
     });
-    return landscapes;
+    landscapes
 }
 
 pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<PointOrd>> {
@@ -257,7 +246,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
     let events_int = &mut BinaryHeap::from(vec![]);
     let status = &mut VecDeque::new();
 
-    while events_base.len() > 0 || events_int.len() > 0 {
+    while !events_base.is_empty() || !events_int.is_empty() {
         // Opposite on purpose due to cmp from bin heap
         let event = if events_base.peek() < events_int.peek(){
             events_int.pop().unwrap()
@@ -393,5 +382,5 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
         }
     }
 
-    return landscapes.to_vec();
+    landscapes.to_vec()
 }

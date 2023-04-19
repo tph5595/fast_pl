@@ -35,7 +35,7 @@ impl Ord for Node {
         if oth < me {
             return std::cmp::Ordering::Less;
         }
-        return std::cmp::Ordering::Equal;
+        std::cmp::Ordering::Equal
     }
 }
 
@@ -60,7 +60,7 @@ struct Event {
 }
 
 fn create_event(birth: f32, death: f32, i: usize) -> Node {
-    return Node {
+    Node {
         birth_event: Event {
             event_type: EventType::Birth,
             value: birth,
@@ -73,23 +73,23 @@ fn create_event(birth: f32, death: f32, i: usize) -> Node {
         alive: false,
         in_top_k: false,
         is_dead: false,
-    };
+    }
 }
 
 fn generate_events(bd_pairs: Vec<BirthDeath>) -> Vec<Node> {
-    return bd_pairs
+    bd_pairs
         .into_iter()
         .filter(|BirthDeath { birth, death }| death.is_finite() && birth.is_finite())
         .enumerate()
         .map(|(i, BirthDeath { birth, death })| create_event(birth, death, i))
-        .collect::<Vec<_>>();
+        .collect::<Vec<_>>()
 }
 
 fn node_to_birthdeath(n: &Node) -> BirthDeath {
-    return BirthDeath {
+    BirthDeath {
         birth: n.birth_event.value,
         death: n.death_event.value,
-    };
+    }
 }
 
 pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<BirthDeath> {
@@ -100,7 +100,7 @@ pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<BirthDeath> {
     let mut in_top = 0;
     let mut waiting = 0;
 
-    while event_stack.len() > 0 {
+    while !event_stack.is_empty(){
         let mut event = event_stack.pop().unwrap();
         match get_value(&event).event_type {
             EventType::Birth => {
@@ -129,12 +129,12 @@ pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<BirthDeath> {
                 // check if next element should be in top k
                 if waiting > 0 {
                     let mut front_index = sweep_status.get(0);
-                    while front_index != None && nodes[*front_index.unwrap()].is_dead {
+                    while front_index.is_some() && nodes[*front_index.unwrap()].is_dead {
                         sweep_status.pop_front();
                         front_index = sweep_status.get(0);
                     }
                     // If queue has no canidate events move on
-                    if front_index == None {
+                    if front_index.is_none() {
                         continue;
                     }
                     // Found a canidate, add it to top k
@@ -147,5 +147,5 @@ pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<BirthDeath> {
             }
         }
     }
-    return filtered_output;
+    filtered_output
 }

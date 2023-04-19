@@ -10,7 +10,7 @@ impl FromStr for BirthDeath {
     type Err = std::string::ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (b, d) = s.split_once(" ").unwrap();
+        let (b, d) = s.split_once(' ').unwrap();
 
         return Ok(BirthDeath {
             birth: b.trim().parse().unwrap(),

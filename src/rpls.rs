@@ -34,7 +34,7 @@ fn area_under_line_segment(a: persistencelandscape::PointOrd, b: persistenceland
     (height * base) / 2.0
 }
 
-fn landscape_norm(landscape: &Vec<persistencelandscape::PointOrd>) -> f32 {
+fn landscape_norm(landscape: &[persistencelandscape::PointOrd]) -> f32 {
     landscape
         .iter()
         .zip(landscape.iter().skip(1))
@@ -44,7 +44,7 @@ fn landscape_norm(landscape: &Vec<persistencelandscape::PointOrd>) -> f32 {
 pub fn l2_norm(landscapes: Vec<Vec<persistencelandscape::PointOrd>>) -> f32 {
     landscapes
         .iter()
-        .map(landscape_norm)
+        .map(|l| landscape_norm(l))
         .sum()
 }
 

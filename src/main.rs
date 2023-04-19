@@ -60,8 +60,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     fn test_runner(k: usize, bd_pairs_vec: Vec<(f32, f32)>, answer_vec: Vec<Vec<(f32, f32)>>) {
         let bd_pairs = bd_pairs_vec
             .into_iter()
