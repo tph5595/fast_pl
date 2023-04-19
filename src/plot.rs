@@ -1,8 +1,24 @@
+#![warn(
+     clippy::all,
+     clippy::pedantic,
+     clippy::nursery,
+     clippy::cargo,
+ )]
+
 use crate::persistencelandscape::PointOrd;
 use float_ord::FloatOrd;
 use plotters::prelude::*;
 
-pub fn plot_landscape(
+/// # Panics
+///
+/// Will panic on fail to generate chart
+/// Will panic on fail to draw chart
+/// Will panic on fail to add data to chart
+///
+/// # Errors
+///
+/// Will error and propogate up on same conditions as panics
+pub fn landscape(
     landscape: Vec<Vec<PointOrd>>,
     height: u32,
     width: u32,
@@ -16,7 +32,7 @@ pub fn plot_landscape(
     let (x_lower, x_upper, y_lower, y_upper) = to_plot
         .iter()
         .flatten()
-        .cloned()
+        .copied()
         .flat_map(|(x, y)| [(FloatOrd(x), FloatOrd(y))])
         .fold((FloatOrd(0.0), FloatOrd(0.0), FloatOrd(0.0), FloatOrd(0.0)), 
               |bounds, (x, y)| 
@@ -39,8 +55,7 @@ pub fn plot_landscape(
         .x_label_area_size(20)
         .y_label_area_size(40)
         // Finally attach a coordinate on the drawing area and make a chart context
-        .build_cartesian_2d(x_lower.0..x_upper.0, y_lower.0..y_upper.0)
-        .unwrap();
+        .build_cartesian_2d(x_lower.0..x_upper.0, y_lower.0..y_upper.0)?;
 
     // Then we can draw a mesh
     chart
@@ -49,16 +64,14 @@ pub fn plot_landscape(
         .x_labels(5)
         .y_labels(5)
         // We can also change the format of the label text
-        .y_label_formatter(&|x| format!("{:.3}", x))
-        .draw()
-        .unwrap();
+        .y_label_formatter(&|x| format!("{x:.3}"))
+        .draw()?;
 
     let colors = vec![&RED, &GREEN, &BLUE];
     for (i, data) in to_plot.into_iter().enumerate() {
         chart
-            .draw_series(LineSeries::new(data, colors[i % colors.len()]))
-            .unwrap();
+            .draw_series(LineSeries::new(data, colors[i % colors.len()]))?;
     }
-    root.present().unwrap();
+    root.present()?;
     Ok(())
 }

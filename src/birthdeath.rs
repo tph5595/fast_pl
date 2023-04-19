@@ -1,3 +1,10 @@
+#![warn(
+     clippy::all,
+     clippy::pedantic,
+     clippy::nursery,
+     clippy::cargo,
+ )]
+
 use std::str::FromStr;
 
 #[derive(Debug)]
@@ -12,7 +19,7 @@ impl FromStr for BirthDeath {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (b, d) = s.split_once(' ').unwrap();
 
-        return Ok(BirthDeath {
+        return Ok(Self {
             birth: b.trim().parse().unwrap(),
             death: d.trim().parse().unwrap(),
         });

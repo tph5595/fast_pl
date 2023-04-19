@@ -9,10 +9,13 @@ use crate::birthdeath::BirthDeath;
 use crate::persistencelandscape;
 use crate::barcode;
 
-pub fn pairs_to_landscape(bd_paris: Vec<BirthDeath>, k:usize, debug:bool) -> Result<Vec<Vec<persistencelandscape::PointOrd>>, &'static str>{
-    let bd_pairs: Vec<BirthDeath> = bd_paris
+/// # Errors
+///
+/// Will return 'Err' if failed to compute persistencelandscape from `bd_pairs`
+pub fn pairs_to_landscape(bd_pairs: Vec<BirthDeath>, k:usize, debug:bool) -> Result<Vec<Vec<persistencelandscape::PointOrd>>, &'static str>{
+    let bd_pairs: Vec<BirthDeath> = bd_pairs
         .into_iter()
-        .filter(|bd| ! (bd.birth == bd.death))
+        .filter(|bd| (bd.birth - bd.death).abs() > f32::EPSILON)
         .collect();
     if bd_pairs.is_empty() {
         if debug {
@@ -22,15 +25,15 @@ pub fn pairs_to_landscape(bd_paris: Vec<BirthDeath>, k:usize, debug:bool) -> Res
     }
 
     if debug {
-        println!("{:?}", bd_pairs);
+        println!("{bd_pairs:?}");
     }
     let filtered_pairs = barcode::barcode_filter(bd_pairs, k);
     if debug {
-        println!("{:?}", filtered_pairs);
+        println!("{filtered_pairs:?}");
     }
     let landscape = persistencelandscape::generate(filtered_pairs, k, debug);
     if debug {
-        println!("{:?}", landscape);
+        println!("{landscape:?}");
     }
     Ok(landscape)
 }
@@ -48,13 +51,18 @@ fn landscape_norm(landscape: &[persistencelandscape::PointOrd]) -> f32 {
         .map(|(&a, &b)| area_under_line_segment(a, b))
         .sum::<f32>()
 }
-pub fn l2_norm(landscapes: Vec<Vec<persistencelandscape::PointOrd>>) -> f32 {
+
+#[must_use]
+pub fn l2_norm(landscapes: &[Vec<persistencelandscape::PointOrd>]) -> f32 {
     landscapes
         .iter()
         .map(|l| landscape_norm(l))
         .sum()
 }
 
-pub fn pairs_to_l2_norm(bd_paris: Vec<BirthDeath>, k:usize, debug:bool) -> f32{
-    l2_norm(pairs_to_landscape(bd_paris, k, debug).unwrap())
+/// # Errors
+///
+/// Will return 'Err' if failed to compute persistencelandscape from `bd_pairs`
+pub fn pairs_to_l2_norm(bd_paris: Vec<BirthDeath>, k:usize, debug:bool) -> Result<f32, &'static str>{
+    Ok(l2_norm(pairs_to_landscape(bd_paris, k, debug)?.as_slice()))
 }
