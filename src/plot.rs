@@ -14,32 +14,32 @@ pub fn plot_landscape(
         .collect();
     // Get bounds
     let lower_bound_x = to_plot
-        .to_vec()
-        .into_iter()
+        .iter()
+        .cloned()
         .flatten()
         .flat_map(|(x, ..)| [FloatOrd(x)])
         .min()
         .unwrap()
         .0;
     let upper_bound_x = to_plot
-        .to_vec()
-        .into_iter()
+        .iter()
+        .cloned()
         .flatten()
         .flat_map(|(x, ..)| [FloatOrd(x)])
         .max()
         .unwrap()
         .0;
     let lower_bound_y = to_plot
-        .to_vec()
-        .into_iter()
+        .iter()
+        .cloned()
         .flatten()
         .flat_map(|(.., y)| [FloatOrd(y)])
         .min()
         .unwrap()
         .0;
     let upper_bound_y = to_plot
-        .to_vec()
-        .into_iter()
+        .iter()
+        .cloned()
         .flatten()
         .flat_map(|(.., y)| [FloatOrd(y)])
         .max()

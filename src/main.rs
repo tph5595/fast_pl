@@ -1,4 +1,3 @@
-use rpls;
 use clap::Parser;
 use csv::Writer;
 use std::error::Error;
@@ -50,7 +49,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         for point in landscape {
             wtr.write_record(&[point.x.0.to_string(), point.y.0.to_string()])?;
         }
-        wtr.write_record(&["", ""])?;
+        wtr.write_record(["", ""])?;
     }
     wtr.flush()?;
     return match args.graph {
@@ -110,21 +109,6 @@ mod tests {
                 (4.0, 1.0),
                 (5.0, 0.0),
             ],
-            vec![],
-        ];
-        test_runner(k, bd_pairs_vec, answer_vec);
-    }
-
-    fn problem_pair_1() {
-        let k = 4;
-        let bd_pairs_vec = vec![
-            (0.0, 0.0),
-            (0.0, 0.0),
-        ];
-        let answer_vec = vec![
-            vec![(0.0, 0.0), (3.0, 3.0), (4.0, 2.0), (4.5, 2.5), (7.0, 0.0)],
-            vec![(1.0, 0.0), (2.0, 1.0), (2.5, 0.5), (4.0, 2.0), (6.0, 0.0)],
-            vec![(2.0, 0.0), (2.5, 0.5), (3.0, 0.0)],
             vec![],
         ];
         test_runner(k, bd_pairs_vec, answer_vec);

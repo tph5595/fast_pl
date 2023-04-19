@@ -7,7 +7,7 @@ pub fn pairs_to_landscape(bd_paris: Vec<BirthDeath>, k:usize, debug:bool) -> Res
         .into_iter()
         .filter(|bd| ! (bd.birth == bd.death))
         .collect();
-    if bd_pairs.len() == 0 {
+    if bd_pairs.is_empty() {
         if debug {
             println!("No BirthDeath pairs found in file");
         }
@@ -25,7 +25,7 @@ pub fn pairs_to_landscape(bd_paris: Vec<BirthDeath>, k:usize, debug:bool) -> Res
     if debug {
         println!("{:?}", landscape);
     }
-    return Ok(landscape);
+    Ok(landscape)
 }
 
 fn area_under_line_segment(a: persistencelandscape::PointOrd, b: persistencelandscape::PointOrd) ->f32 {
@@ -44,7 +44,7 @@ fn landscape_norm(landscape: &Vec<persistencelandscape::PointOrd>) -> f32 {
 pub fn l2_norm(landscapes: Vec<Vec<persistencelandscape::PointOrd>>) -> f32 {
     landscapes
         .iter()
-        .map(|landscape| landscape_norm(landscape))
+        .map(landscape_norm)
         .sum()
 }
 

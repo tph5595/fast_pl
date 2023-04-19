@@ -241,35 +241,6 @@ fn handle_intersection(
     return None;
 }
 
-fn mountain_at_point(mountain: PersistenceMountain, x: FloatOrd<f32>) -> PointOrd {
-    if mountain.birth.x > x || mountain.death.x < x {
-        // Mountain not alive at point
-        return PointOrd {
-            x,
-            y: FloatOrd(0.0),
-        };
-    }
-    if mountain.middle.x < x {
-        // Handle using first segment
-        return PointOrd {
-            x,
-            y: FloatOrd(x.0 - mountain.birth.x.0),
-        };
-    } else if mountain.middle.x < x {
-        // Handle using second segment
-        return PointOrd {
-            x,
-            y: FloatOrd(mountain.death.x.0 - x.0),
-        };
-    } else {
-        // Intersection is at peak
-        return PointOrd {
-            x,
-            y: mountain.middle.y,
-        };
-    }
-}
-
 pub fn empty_landscape(k: usize) -> Vec<Vec<PointOrd>>{
     let mut landscapes = Vec::with_capacity(k as usize);
     (0..k).for_each(|_| {
@@ -367,7 +338,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
                     mountains[element].position = Some(mountains[element].position.unwrap() - 1);
                     log_to_landscape(
                         mountains[element],
-                        mountain_at_point(mountains[element], event.value.x),
+                        event.value,
                         landscapes,
                         k,
                     );
