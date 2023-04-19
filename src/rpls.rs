@@ -1,3 +1,10 @@
+#![warn(
+     clippy::all,
+     clippy::pedantic,
+     clippy::nursery,
+     clippy::cargo,
+ )]
+
 use crate::birthdeath::BirthDeath;
 use crate::persistencelandscape;
 use crate::barcode;

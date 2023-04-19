@@ -2,6 +2,12 @@
 name = "rpls"
 version = "0.2.0"
 edition = "2021"
+description = "A plane-sweep implementation to compute persistence landscapes"
+repository = "https://github.com/tph5595/rpls"
+readme = "README.md"
+license = "GNU AGPLv3"
+keywords = ["tda", "data-analysis", "machine-learning"]
+categories = ["algorithms", "mathematics", "science"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

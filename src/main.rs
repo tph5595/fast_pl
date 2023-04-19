@@ -1,3 +1,10 @@
+#![warn(
+     clippy::all,
+     clippy::pedantic,
+     clippy::nursery,
+     clippy::cargo,
+ )]
+
 use clap::Parser;
 use csv::Writer;
 use std::error::Error;
@@ -33,29 +40,27 @@ struct Args {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
-    let bd_paris: Vec<rpls::birthdeath::BirthDeath> = fs::read_to_string(args.name)
-        .expect("File not found")
-        .trim()
+    let bd_paris: Vec<rpls::birthdeath::BirthDeath> = fs::read_to_string(args.name)?
         .lines()
         .filter(|s| !s.contains("inf") && !s.is_empty())
         .map(str::parse)
         .map(Result::unwrap)
         .collect();
 
-    let landscape = rpls::rpls::pairs_to_landscape(bd_paris, args.k, args.debug).unwrap();
+    let landscapes = rpls::rpls::pairs_to_landscape(bd_paris, args.k, args.debug)?;
 
     let mut wtr = Writer::from_path(args.csv)?;
-    for landscape in &landscape {
+    for landscape in &landscapes {
         for point in landscape {
             wtr.write_record(&[point.x.0.to_string(), point.y.0.to_string()])?;
         }
         wtr.write_record(["", ""])?;
     }
     wtr.flush()?;
-    return match args.graph {
-        true => rpls::plot::plot_landscape(landscape, args.height, args.width),
-        false => Ok(()),
-    };
+    if args.graph {
+        return rpls::plot::plot_landscape(landscapes, args.height, args.width);
+    }
+    Ok(())
 }
 
 #[cfg(test)]
