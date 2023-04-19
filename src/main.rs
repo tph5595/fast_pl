@@ -82,7 +82,7 @@ mod tests {
             })
             .collect();
 
-        let filtered_pairs = rpls::barcode::barcode_filter(bd_pairs, k);
+        let filtered_pairs = rpls::barcode::filter(bd_pairs, k);
         let landscape = rpls::persistencelandscape::generate(filtered_pairs, k, false);
         assert!(answer == landscape);
     }

@@ -27,7 +27,7 @@ pub fn pairs_to_landscape(bd_pairs: Vec<BirthDeath>, k:usize, debug:bool) -> Res
     if debug {
         println!("{bd_pairs:?}");
     }
-    let filtered_pairs = barcode::barcode_filter(bd_pairs, k);
+    let filtered_pairs = barcode::filter(bd_pairs, k);
     if debug {
         println!("{filtered_pairs:?}");
     }

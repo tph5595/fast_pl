@@ -156,17 +156,19 @@ fn generate_initial_events(mountains: Vec<PersistenceMountain>) -> Vec<Event> {
         .collect()
 }
 
-fn current_segment_start(mountain: PersistenceMountain) -> (f32, f32) {
-    match mountain.slope_rising {
-        true => (mountain.birth.x.0, mountain.birth.y.0),
-        false => (mountain.middle.x.0, mountain.middle.y.0),
+const fn current_segment_start(mountain: PersistenceMountain) -> (f32, f32) {
+    if mountain.slope_rising {
+        (mountain.birth.x.0, mountain.birth.y.0)
+    } else { 
+        (mountain.middle.x.0, mountain.middle.y.0)
     }
 }
 
-fn current_segment_end(mountain: PersistenceMountain) -> (f32, f32) {
-    match mountain.slope_rising {
-        true => (mountain.middle.x.0, mountain.middle.y.0),
-        false => (mountain.death.x.0, mountain.death.y.0),
+const fn current_segment_end(mountain: PersistenceMountain) -> (f32, f32) {
+    if mountain.slope_rising {
+        (mountain.middle.x.0, mountain.middle.y.0)
+    } else {
+        (mountain.death.x.0, mountain.death.y.0)
     }
 }
 

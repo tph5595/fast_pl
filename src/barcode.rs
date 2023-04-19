@@ -1,3 +1,10 @@
+#![warn(
+     clippy::all,
+     clippy::pedantic,
+     clippy::nursery,
+     clippy::cargo,
+ )]
+
 use crate::birthdeath::BirthDeath;
 use std::collections::{BinaryHeap, VecDeque};
 
@@ -17,10 +24,11 @@ struct Node {
     is_dead: bool,
 }
 
-fn get_value(n: &Node) -> &Event {
-    match n.alive {
-        true => &n.death_event,
-        false => &n.birth_event,
+const fn get_value(n: &Node) -> &Event {
+    if n.alive { 
+        &n.death_event 
+    } else { 
+        &n.birth_event 
     }
 }
 
@@ -59,7 +67,7 @@ struct Event {
     value: f32,
 }
 
-fn create_event(birth: f32, death: f32, i: usize) -> Node {
+const fn create_event(birth: f32, death: f32, i: usize) -> Node {
     Node {
         birth_event: Event {
             event_type: EventType::Birth,
@@ -85,23 +93,26 @@ fn generate_events(bd_pairs: Vec<BirthDeath>) -> Vec<Node> {
         .collect::<Vec<_>>()
 }
 
-fn node_to_birthdeath(n: &Node) -> BirthDeath {
+const fn node_to_birthdeath(n: &Node) -> BirthDeath {
     BirthDeath {
         birth: n.birth_event.value,
         death: n.death_event.value,
     }
 }
 
-pub fn barcode_filter(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<BirthDeath> {
+/// # Panics
+///
+/// Will panic is structure gets corrupted
+#[must_use]
+pub fn filter(bd_pairs: Vec<BirthDeath>, k: usize) -> Vec<BirthDeath> {
     let mut nodes = generate_events(bd_pairs);
-    let mut event_stack = BinaryHeap::from(nodes.to_vec());
+    let mut event_stack = BinaryHeap::from(nodes.clone());
     let sweep_status: &mut VecDeque<usize> = &mut VecDeque::new();
     let mut filtered_output: Vec<BirthDeath> = Vec::new();
     let mut in_top = 0;
     let mut waiting = 0;
 
-    while !event_stack.is_empty(){
-        let mut event = event_stack.pop().unwrap();
+    while let Some(mut event) = event_stack.pop(){
         match get_value(&event).event_type {
             EventType::Birth => {
                 // Check if in top-k and handle
