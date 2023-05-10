@@ -195,8 +195,8 @@ fn intersects_with_neighbor(m1: PersistenceMountain, m2: PersistenceMountain) ->
         // Ignore all colinnear, not proper and no intersection results these will be resolved on
         // slope change or do not matter
         Some(i) => match i {
-            LineIntersection::SinglePoint { intersection, is_proper } => None,
-            LineIntersection::Collinear { intersection } => None
+            LineIntersection::SinglePoint { intersection: _, is_proper: _ } => None,
+            LineIntersection::Collinear { intersection: _ } => None
 
         },
         None => None
