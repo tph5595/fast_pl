@@ -187,14 +187,19 @@ fn intersects_with_neighbor(m1: PersistenceMountain, m2: PersistenceMountain) ->
     match inter {
         Some(LineIntersection::SinglePoint {
             intersection: Coord { x, y },
-            ..
+            is_proper: true
         }) => Some(PointOrd {
             x: min(FloatOrd(x), min(m1.death.x, m2.death.x)),
             y: FloatOrd(y),
         }),
         // Ignore all colinnear, not proper and no intersection results these will be resolved on
         // slope change or do not matter
-        _ => None,
+        Some(i) => match i {
+            LineIntersection::SinglePoint { intersection, is_proper } => None,
+            LineIntersection::Collinear { intersection } => None
+
+        },
+        None => None
     }
 }
 
@@ -270,7 +275,7 @@ fn handle_birth(state: &mut State, event: &Event){
         &state.mountains,
         Direction::Above,
         ) {
-        state.events.events_int.push(new_event);
+        state.events.events_int.push_back(new_event);
     }
 
 }
@@ -304,18 +309,19 @@ fn handle_intersection(state: &mut State, event: &Event){
         upper.position.expect("Dead mountain in intersection event"),
         lower.position.expect("Dead mountain in intersection event"),
         );
+    assert!(upper.position != lower.position);
     (state.mountains[lower.id].position, state.mountains[upper.id].position) =
         (upper.position, lower.position);
     // Check for intersections
     if let Some(new_event) =
         find_intersection(&state.status, state.mountains[lower.id], &state.mountains, Direction::Above)
         {
-            state.events.events_int.push(new_event);
+            state.events.events_int.push_back(new_event);
         }
     if let Some(new_event) =
         find_intersection(&state.status, state.mountains[upper.id], &state.mountains, Direction::Below)
         {
-            state.events.events_int.push(new_event);
+            state.events.events_int.push_back(new_event);
         }
 }
 
@@ -371,13 +377,13 @@ fn handle_middle(state: &mut State, event: &Event){
         &state.mountains,
         Direction::Below,
         ) {
-        state.events.events_int.push(new_event);
+        state.events.events_int.push_back(new_event);
     }
 }
 
 #[derive(Debug)]
 struct Events{
-    events_int: BinaryHeap<Event>,
+    events_int: VecDeque<Event>,
     events_base: BinaryHeap<Event>,
 }
 
@@ -395,21 +401,29 @@ impl Iterator for State{
     type Item = Event;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.events.events_base.is_empty() && self.events.events_int.is_empty() {
-            return None
+        let event = if !self.events.events_int.is_empty() {
+            Some(self.events.events_int.pop_front().unwrap())
         }
-        // Opposite on purpose due to cmp from bin heap
-        let event = if self.events.events_base.peek() < self.events.events_int.peek(){
-            self.events.events_int.pop().unwrap()
-        }else{
-            self.events.events_base.pop().unwrap()
+        else if !self.events.events_base.is_empty() {
+            Some(self.events.events_base.pop().unwrap())
+        }
+        else {
+            None
         };
+        // let int_head = self.events.events_int.pop_front().unwrap();
+        // Opposite on purpose due to cmp from bin heap
+        // let event = if self.events.events_base.peek().unwrap() < &int_head{
+            // int_head
+        // }else{
+            // self.events.events_int.push_front(int_head); // Add value back in 
+            // self.events.events_base.pop().unwrap()
+        // };
         if self.debug {
             println!("{event:?}");
             println!("{:?}", self.status);
             println!("================================================================");
         }
-        Some(event)
+        event
     }
 }
 
@@ -425,7 +439,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
         mountains: mountains.clone(),
         landscapes: empty_landscape(k),
         events: Events {
-            events_int: BinaryHeap::from(vec![]),
+            events_int: VecDeque::new(),
             events_base: BinaryHeap::from(generate_initial_events(mountains)),
         },
         k,
