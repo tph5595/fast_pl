@@ -187,7 +187,7 @@ fn intersects_with_neighbor(m1: PersistenceMountain, m2: PersistenceMountain) ->
     match inter {
         Some(LineIntersection::SinglePoint {
             intersection: Coord { x, y },
-            is_proper: true
+            ..
         }) => Some(PointOrd {
             x: min(FloatOrd(x), min(m1.death.x, m2.death.x)),
             y: FloatOrd(y),
