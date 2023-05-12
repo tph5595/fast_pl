@@ -49,9 +49,9 @@ enum Direction {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum EventType {
+    Death,
     Up,
     Down,
-    Death,
     Intersection
 }
 
