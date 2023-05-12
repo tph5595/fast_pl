@@ -120,7 +120,7 @@ fn generate_mountains(bd_pairs: Vec<BirthDeath>) -> Vec<PersistenceMountain> {
         .collect::<Vec<_>>()
 }
 
-fn generate_initial_events(mountains: Vec<PersistenceMountain>) -> Vec<Event> {
+fn generate_initial_events(mountains: &Vec<PersistenceMountain>) -> Vec<Event> {
     mountains
         .into_iter()
         .flat_map(
@@ -133,21 +133,21 @@ fn generate_initial_events(mountains: Vec<PersistenceMountain>) -> Vec<Event> {
              }| {
                 vec![
                     Event {
-                        value: birth,
+                        value: *birth,
                         event_type: EventType::Up,
-                        parent_mountain_id: id,
+                        parent_mountain_id: *id,
                         parent_mountain2_id: None,
                     },
                     Event {
-                        value: middle,
+                        value: *middle,
                         event_type: EventType::Down,
-                        parent_mountain_id: id,
+                        parent_mountain_id: *id,
                         parent_mountain2_id: None,
                     },
                     Event {
-                        value: death,
+                        value: *death,
                         event_type: EventType::Death,
-                        parent_mountain_id: id,
+                        parent_mountain_id: *id,
                         parent_mountain2_id: None,
                     },
                 ]
@@ -371,16 +371,6 @@ fn handle_down(state: &mut State, event: &Event){
         &mut state.landscapes,
         state.k,
         );
-    // Check and handle all intersections
-    //let mut new_event = find_intersection(
-    //    & state.status,
-    //    state.mountains[event.parent_mountain_id],
-    //    &state.mountains,
-    //    Direction::Above,
-    //    );
-    //while let Some(intersection) = new_event{
-    //    new_event = handle_intersection(state, &intersection);
-    //}
     // Check for intersections
     let mut new_event = find_intersection(
         &state.status,
@@ -394,38 +384,14 @@ fn handle_down(state: &mut State, event: &Event){
     
 }
 
-#[derive(Debug)]
-struct Events{
-    events_base: BinaryHeap<Event>,
-}
 
 #[derive(Debug)]
 struct State{
     status: VecDeque<usize>,
     mountains: Vec<PersistenceMountain>,
     landscapes: Vec<Vec<PointOrd>>,
-    events: Events,
+    events: BinaryHeap<Event>,
     k: usize,
-    debug: bool
-}
-
-impl Iterator for State{
-    type Item = Event;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let event = if !self.events.events_base.is_empty() {
-            Some(self.events.events_base.pop().unwrap())
-        }
-        else {
-            None
-        };
-        if self.debug {
-            println!("{event:?}");
-            println!("{:?}", self.status);
-            println!("================================================================");
-        }
-        event
-    }
 }
 
 /// # Panics
@@ -436,17 +402,17 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
     let mountains = generate_mountains(bd_pairs);
 
     let mut state = State{
+        events: BinaryHeap::from(generate_initial_events(&mountains)),
         status: VecDeque::new(),
-        mountains: mountains.clone(),
+        mountains,
         landscapes: empty_landscape(k),
-        events: Events {
-            events_base: BinaryHeap::from(generate_initial_events(mountains)),
-        },
         k,
-        debug
     };
 
-    while let Some(event) = state.next(){
+    while let Some(event) = state.events.pop(){
+        if debug{
+            print!("{:?}", event);
+        }
         match event.event_type {
             EventType::Up => {
                 handle_up(&mut state, &event);

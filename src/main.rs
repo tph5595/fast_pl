@@ -33,7 +33,7 @@ struct Args {
     #[clap(short, long, value_parser)]
     graph: bool,
     /// Save to CSV
-    #[clap(short, long, value_parser, default_value = "output.csv")]
+    #[clap(short, long, value_parser, default_value = "")]
     csv: String,
 }
 
@@ -49,14 +49,16 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let landscapes = rpls::rpls::pairs_to_landscape(bd_paris, args.k, args.debug)?;
 
-    let mut wtr = Writer::from_path(args.csv)?;
-    for landscape in &landscapes {
-        for point in landscape {
-            wtr.write_record(&[point.x.0.to_string(), point.y.0.to_string()])?;
+    if args.csv != ""{
+        let mut wtr = Writer::from_path(args.csv)?;
+        for landscape in &landscapes {
+            for point in landscape {
+                wtr.write_record(&[point.x.0.to_string(), point.y.0.to_string()])?;
+            }
+            wtr.write_record(["", ""])?;
         }
-        wtr.write_record(["", ""])?;
+        wtr.flush()?;
     }
-    wtr.flush()?;
     if args.graph {
         return rpls::plot::landscape(landscapes, args.height, args.width);
     }
