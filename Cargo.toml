@@ -1,6 +1,6 @@
 [package]
 name = "rpls"
-version = "0.3.0"
+version = "0.3.2"
 edition = "2021"
 description = "A plane-sweep implementation to compute persistence landscapes"
 repository = "https://github.com/tph5595/rpls"
