@@ -59,6 +59,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         wtr.flush()?;
     }
+    #[cfg(feature = "plot")]
     if args.graph {
         return rpls::plot::landscape(landscapes, args.height, args.width);
     }
