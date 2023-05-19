@@ -40,14 +40,14 @@ struct Args {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
-    let bd_paris: Vec<rpls::birthdeath::BirthDeath> = fs::read_to_string(args.name)?
+    let bd_paris: Vec<fast_pl::birthdeath::BirthDeath> = fs::read_to_string(args.name)?
         .lines()
         .filter(|s| !s.contains("inf") && !s.is_empty())
         .map(str::parse)
         .map(Result::unwrap)
         .collect();
 
-    let landscapes = rpls::rpls::pairs_to_landscape(bd_paris, args.k, args.debug)?;
+    let landscapes = fast_pl::rpls::pairs_to_landscape(bd_paris, args.k, args.debug)?;
 
     if args.csv != ""{
         let mut wtr = Writer::from_path(args.csv)?;
@@ -61,7 +61,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     #[cfg(feature = "plot")]
     if args.graph {
-        return rpls::plot::landscape(landscapes, args.height, args.width);
+        return fast_pl::plot::landscape(landscapes, args.height, args.width);
     }
     Ok(())
 }
@@ -71,13 +71,13 @@ mod tests {
     fn test_runner(k: usize, bd_pairs_vec: Vec<(f32, f32)>, answer_vec: Vec<Vec<(f32, f32)>>) {
         let bd_pairs = bd_pairs_vec
             .into_iter()
-            .map(|(x, y)| rpls::birthdeath::BirthDeath { birth: x, death: y })
+            .map(|(x, y)| fast_pl::birthdeath::BirthDeath { birth: x, death: y })
             .collect();
-        let answer: Vec<Vec<rpls::persistencelandscape::PointOrd>> = answer_vec
+        let answer: Vec<Vec<fast_pl::persistencelandscape::PointOrd>> = answer_vec
             .into_iter()
             .map(|x| {
                 x.into_iter()
-                    .map(|(x, y)| rpls::persistencelandscape::PointOrd {
+                    .map(|(x, y)| fast_pl::persistencelandscape::PointOrd {
                         x: float_ord::FloatOrd(x),
                         y: float_ord::FloatOrd(y),
                     })
@@ -85,8 +85,8 @@ mod tests {
             })
             .collect();
 
-        let filtered_pairs = rpls::barcode::filter(bd_pairs, k);
-        let landscape = rpls::persistencelandscape::generate(filtered_pairs, k, false);
+        let filtered_pairs = fast_pl::barcode::filter(bd_pairs, k);
+        let landscape = fast_pl::persistencelandscape::generate(filtered_pairs, k, false);
         assert!(answer == landscape);
     }
 

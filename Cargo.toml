@@ -1,9 +1,9 @@
 [package]
-name = "rpls"
-version = "0.3.2"
+name = "fast_pl"
+version = "1.0.0"
 edition = "2021"
 description = "A plane-sweep implementation to compute persistence landscapes"
-repository = "https://github.com/tph5595/rpls"
+repository = "https://github.com/tph5595/fast_pl"
 readme = "README.md"
 license = "GNU AGPLv3"
 keywords = ["tda", "data-analysis", "machine-learning"]
