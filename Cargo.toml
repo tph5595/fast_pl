@@ -5,7 +5,7 @@ edition = "2021"
 description = "A plane-sweep implementation to compute persistence landscapes"
 repository = "https://github.com/tph5595/fast_pl"
 readme = "README.md"
-license = "GNU AGPLv3"
+license = "AGPL-3.0-or-later"
 keywords = ["tda", "data-analysis", "machine-learning"]
 categories = ["algorithms", "mathematics", "science"]
 
