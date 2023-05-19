@@ -1,4 +1,4 @@
-# rpls
+# fast-pl
 The fastest persistence landscape algorithm!
 
 Rust Persistance Landscape using line sweep 
