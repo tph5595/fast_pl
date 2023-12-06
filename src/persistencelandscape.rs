@@ -313,6 +313,8 @@ fn handle_intersection(state: &mut State, event: &Event) -> Option<Event>{
     (state.mountains[lower.id].position, state.mountains[upper.id].position) =
         (upper.position, lower.position);
     // Check for intersections
+    // Yes this looks like a bug but one of the segments has all of their intersections already handled
+    // so it is only a waste of clocks. It is correct.
     if let Some(new_event) =
         find_intersection(&state.status, state.mountains[lower.id], &state.mountains, Direction::Above)
         {
