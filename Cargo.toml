@@ -8,6 +8,7 @@ readme = "README.md"
 license = "AGPL-3.0-or-later"
 keywords = ["tda", "data-analysis", "machine-learning"]
 categories = ["algorithms", "mathematics", "science"]
+exclude = ["./.direnv/*", "flake.nix", "flake.lock"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
