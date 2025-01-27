@@ -63,7 +63,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     if args.graph {
         return fast_pl::plot::landscape(landscapes, args.height, args.width);
     }
-    println!("{}", fast_pl::rpls::l2_norm(&landscapes));
+    if args.debug{
+        println!("Area: {}", fast_pl::rpls::l2_norm(&landscapes));
+    }
     Ok(())
 }
 
