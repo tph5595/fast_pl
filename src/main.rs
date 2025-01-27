@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let landscapes = fast_pl::rpls::pairs_to_landscape(bd_paris, args.k, args.debug)?;
 
-    if args.csv != ""{
+    if !args.csv.is_empty() {
         let mut wtr = Writer::from_path(args.csv)?;
         for landscape in &landscapes {
             for point in landscape {
@@ -63,6 +63,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if args.graph {
         return fast_pl::plot::landscape(landscapes, args.height, args.width);
     }
+    println!("{}", fast_pl::rpls::l2_norm(&landscapes));
     Ok(())
 }
 

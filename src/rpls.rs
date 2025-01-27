@@ -5,6 +5,9 @@
      clippy::cargo,
  )]
 
+use std::cmp;
+use float_ord::FloatOrd;
+
 use crate::birthdeath::BirthDeath;
 use crate::persistencelandscape;
 use crate::barcode;
@@ -41,7 +44,13 @@ pub fn pairs_to_landscape(bd_pairs: Vec<BirthDeath>, k:usize, debug:bool) -> Res
 fn area_under_line_segment(a: persistencelandscape::PointOrd, b: persistencelandscape::PointOrd) ->f32 {
     let height = (a.y.0 - b.y.0).abs();
     let base = (a.x.0 - b.x.0).abs();
-    (height * base) / 2.0
+    let triangle = (height * base) / 2.0;
+
+    let s1 = base;
+    let s2 = cmp::min(FloatOrd(a.y.0), FloatOrd(b.y.0)).0;
+    let rectangle = s1 * s2;
+
+    triangle + rectangle
 }
 
 fn landscape_norm(landscape: &[persistencelandscape::PointOrd]) -> f32 {
