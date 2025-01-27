@@ -1,6 +1,6 @@
 [package]
 name = "fast_pl"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 description = "A plane-sweep implementation to compute persistence landscapes"
 repository = "https://github.com/tph5595/fast_pl"
