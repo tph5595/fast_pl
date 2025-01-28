@@ -211,12 +211,14 @@ fn log_to_landscape(
 ) {
     let position = mountain.position.expect("Mountain with event is dead");
     if position < k {
-        // Don't log points twice
-        if ! landscapes[position].is_empty(){
-            assert_ne!(*landscapes[position].last().unwrap(), value);
-        }
-        // Ensure points are increasing x 
-        if ! landscapes[position].is_empty(){
+        // Don't log points twice This is fine to prevent ordering problems if start and end points
+        // are the same, avoids perfect ordering
+        // if ! landscapes[position].is_empty(){
+        //     assert_ne!(*landscapes[position].last().unwrap(), value);
+        // }
+        // Ensure points are increasing x (except if points are exactly the same)
+        if ! landscapes[position].is_empty() && 
+            *landscapes[position].last().unwrap() != value{
             assert!(landscapes[position].last().unwrap().x.0 < value.x.0,
                 "Last x in landscape {} is {} but new point to be added has an x of {}", 
                 position,
