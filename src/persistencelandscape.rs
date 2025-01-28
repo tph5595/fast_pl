@@ -25,8 +25,8 @@ struct PersistenceMountain {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PointOrd {
-    pub x: FloatOrd<f32>,
-    pub y: FloatOrd<f32>,
+    pub x: FloatOrd<f64>,
+    pub y: FloatOrd<f64>,
 }
 
 impl Ord for PointOrd {
@@ -89,7 +89,7 @@ impl PartialEq for Event {
 
 impl Eq for Event {}
 
-fn create_mountain(birth: f32, death: f32, index: usize) -> PersistenceMountain {
+fn create_mountain(birth: f64, death: f64, index: usize) -> PersistenceMountain {
     let half_dist = (death - birth) / 2.0;
 
     PersistenceMountain {
@@ -156,7 +156,7 @@ fn generate_initial_events(mountains: &Vec<PersistenceMountain>) -> Vec<Event> {
         .collect()
 }
 
-const fn current_segment_start(mountain: PersistenceMountain) -> (f32, f32) {
+const fn current_segment_start(mountain: PersistenceMountain) -> (f64, f64) {
     if mountain.slope_rising {
         (mountain.birth.x.0, mountain.birth.y.0)
     } else { 
@@ -164,7 +164,7 @@ const fn current_segment_start(mountain: PersistenceMountain) -> (f32, f32) {
     }
 }
 
-const fn current_segment_end(mountain: PersistenceMountain) -> (f32, f32) {
+const fn current_segment_end(mountain: PersistenceMountain) -> (f64, f64) {
     if mountain.slope_rising {
         (mountain.middle.x.0, mountain.middle.y.0)
     } else {
@@ -172,7 +172,7 @@ const fn current_segment_end(mountain: PersistenceMountain) -> (f32, f32) {
     }
 }
 
-fn create_line_segment(mountain: PersistenceMountain) -> Line<f32> {
+fn create_line_segment(mountain: PersistenceMountain) -> Line<f64> {
     Line {
         start: current_segment_start(mountain).into(),
         end: current_segment_end(mountain).into(),
@@ -211,6 +211,33 @@ fn log_to_landscape(
 ) {
     let position = mountain.position.expect("Mountain with event is dead");
     if position < k {
+        // Don't log points twice
+        if ! landscapes[position].is_empty(){
+            assert_ne!(*landscapes[position].last().unwrap(), value);
+        }
+        // Ensure points are increasing x 
+        if ! landscapes[position].is_empty(){
+            assert!(landscapes[position].last().unwrap().x.0 < value.x.0,
+                "Last x in landscape {} is {} but new point to be added has an x of {}", 
+                position,
+                landscapes[position].last().unwrap().x.0, 
+                value.x.0); 
+        }
+        // Ensure birth/death is in bottom most landscape
+        let below = position + 1;
+        if value.y.0 == 0.0 &&
+            below < landscapes.len() && 
+            ! landscapes[below].is_empty(){
+            assert!(landscapes[below].last().unwrap().y.0 == 0.0,
+                "Attempting to add a birth/death ({},{}) to higher landscape {} when {} is non zero ({},{})", 
+                value.x.0,
+                value.y.0,
+                position,
+                below,
+                landscapes[below].last().unwrap().x.0,
+                landscapes[below].last().unwrap().y.0,
+                ); 
+        }
         landscapes[position].push(value);
     }
 }
@@ -233,12 +260,14 @@ fn find_intersection(
 
     if let Some(neighbor) = status.get(neighbor_index) {
         if let Some(intersection) = intersects_with_neighbor(m1, mountains[*neighbor]) {
-            return Some(Event {
+            let intersection = Event {
                 value: intersection,
                 event_type: EventType::Intersection,
                 parent_mountain_id: m1.id,
                 parent_mountain2_id: Some(*neighbor),
-            });
+            };
+            // println!("{intersection:?}");
+            return Some(intersection);
         }
     }
     None
@@ -269,14 +298,14 @@ fn handle_up(state: &mut State, event: &Event){
         state.k,
         );
     // Check and handle all intersections
-    let mut new_event = find_intersection(
+    let new_event = find_intersection(
         & state.status,
         state.mountains[event.parent_mountain_id],
         &state.mountains,
         Direction::Above,
         );
-    while let Some(intersection) = new_event{
-        new_event = handle_intersection(state, &intersection);
+    if let Some(intersection) = new_event{
+        handle_intersection(state, &intersection);
     }
 }
 
@@ -313,19 +342,19 @@ fn handle_intersection(state: &mut State, event: &Event) -> Option<Event>{
     (state.mountains[lower.id].position, state.mountains[upper.id].position) =
         (upper.position, lower.position);
     // Check for intersections
-    // Yes this looks like a bug but one of the segments has all of their intersections already handled
-    // so it is only a waste of clocks. It is correct.
+    // Must check both ways because of no sorting, intersections can be discovered in both
+    // directions
     if let Some(new_event) =
         find_intersection(&state.status, state.mountains[lower.id], &state.mountains, Direction::Above)
         {
-            return Some(new_event);
+            handle_intersection(state, &new_event);
         }
     if let Some(new_event) =
         find_intersection(&state.status, state.mountains[upper.id], &state.mountains, Direction::Below)
         {
-            return Some(new_event);
+            handle_intersection(state, &new_event);
         }
-    return None;
+    None
 }
 
 
@@ -334,6 +363,7 @@ fn handle_death(state: &mut State, event: &Event){
         .position
         .expect("Death of dead mountain");
     // Check for floating point mess up on death/intersection Ordering
+    // TODO: What is this???? feels like a bug and a bad hotfix
     let weird_q = &mut VecDeque::new();
     if pos != state.status.len() - 1 {
         while pos < state.status.len() - 1 {
@@ -350,6 +380,7 @@ fn handle_death(state: &mut State, event: &Event){
     // remove and disable
     state.status.pop_back();
     state.mountains[event.parent_mountain_id].position = None;
+    // TODO: Same here???? L -17
     while !weird_q.is_empty() {
         let element = weird_q.pop_back().unwrap();
         state.mountains[element].position = Some(state.mountains[element].position.unwrap() - 1);
@@ -374,14 +405,14 @@ fn handle_down(state: &mut State, event: &Event){
         state.k,
         );
     // Check for intersections
-    let mut new_event = find_intersection(
+    let new_event = find_intersection(
         &state.status,
         state.mountains[event.parent_mountain_id],
         &state.mountains,
         Direction::Below,
         );
-    while let Some(intersection) = new_event{
-        new_event = handle_intersection(state, &intersection);
+    if let Some(intersection) = new_event{
+        handle_intersection(state, &intersection);
     }
     
 }
@@ -413,7 +444,8 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
 
     while let Some(event) = state.events.pop(){
         if debug{
-            print!("{:?}", event);
+            println!("{event:?}");
+            // println!("\n{:?}\n", state.events);
         }
         match event.event_type {
             EventType::Up => {

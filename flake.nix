@@ -46,6 +46,7 @@
             cargo-watch
             rust-analyzer
             gcc
+            fontconfig
           ];
 
           env = {

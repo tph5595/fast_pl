@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 #[cfg(test)]
 mod tests {
-    fn test_runner(k: usize, bd_pairs_vec: Vec<(f32, f32)>, answer_vec: Vec<Vec<(f32, f32)>>) {
+    fn test_runner(k: usize, bd_pairs_vec: Vec<(f64, f64)>, answer_vec: Vec<Vec<(f64, f64)>>) {
         let bd_pairs = bd_pairs_vec
             .into_iter()
             .map(|(x, y)| fast_pl::birthdeath::BirthDeath { birth: x, death: y })

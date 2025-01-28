@@ -64,10 +64,10 @@ impl Eq for Node {}
 #[derive(Debug, Clone)]
 struct Event {
     event_type: EventType,
-    value: f32,
+    value: f64,
 }
 
-const fn create_event(birth: f32, death: f32, i: usize) -> Node {
+const fn create_event(birth: f64, death: f64, i: usize) -> Node {
     Node {
         birth_event: Event {
             event_type: EventType::Birth,

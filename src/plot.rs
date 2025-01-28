@@ -24,7 +24,7 @@ pub fn landscape(
     width: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Set up the data
-    let to_plot: Vec<Vec<(f32, f32)>> = landscape
+    let to_plot: Vec<Vec<(f64, f64)>> = landscape
         .into_iter()
         .map(|s| s.into_iter().map(|PointOrd { x, y }| (x.0, y.0)).collect())
         .collect();
