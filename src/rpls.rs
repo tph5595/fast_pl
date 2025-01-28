@@ -70,6 +70,9 @@ where
     data.windows(2).all(|w| w[0] <= w[1])
 }
 
+/// # Panics
+///
+/// Will panic if areas are not strictly decreasing or equal
 #[must_use]
 pub fn l2_norm(landscapes: &[Vec<persistencelandscape::PointOrd>]) -> f64 {
     let areas = landscapes

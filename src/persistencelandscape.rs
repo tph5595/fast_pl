@@ -67,10 +67,16 @@ struct Event {
 impl Ord for Event {
     // Compare points then event_type
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        if self.value == other.value{
+        if self.value != other.value{
+            return self.value.cmp(&other.value).reverse()
+        }
+        if self.event_type != other.event_type{
             return self.event_type.cmp(&other.event_type).reverse();
         }
-        self.value.cmp(&other.value).reverse()
+        if self.parent_mountain_id != other.parent_mountain_id {
+            return self.parent_mountain_id.cmp(&other.parent_mountain_id).reverse();
+        }
+        self.parent_mountain2_id.cmp(&other.parent_mountain2_id).reverse()
     }
 }
 
@@ -225,20 +231,29 @@ fn log_to_landscape(
                 landscapes[position].last().unwrap().x.0, 
                 value.x.0); 
         }
-        // Ensure birth/death is in bottom most landscape
+        // Ensure birth/death is in bottom most landscape (exception if the nearest is a tie, they
+        // are just dieing out of order and the other must die right after)
         let below = position + 1;
         if value.y.0 == 0.0 &&
             below < landscapes.len() && 
             ! landscapes[below].is_empty(){
-            assert!(landscapes[below].last().unwrap().y.0 == 0.0,
-                "Attempting to add a birth/death ({},{}) to higher landscape {} when {} is non zero ({},{})", 
-                value.x.0,
-                value.y.0,
-                position,
-                below,
-                landscapes[below].last().unwrap().x.0,
-                landscapes[below].last().unwrap().y.0,
-                ); 
+                if landscapes[below].last().unwrap() == landscapes[position].last().unwrap(){
+                    // This is fine, ignore. See above comment
+                }
+                else{
+                    // println!("{:?}", landscapes[below].last().unwrap());
+                    // println!("{:?}", landscapes[position].last().unwrap());
+                    // println!("{:?}", mountain);
+                    assert!(landscapes[below].last().unwrap().y.0 == 0.0,
+                        "Attempting to add a birth/death ({},{}) to higher landscape {} when {} is non zero ({},{})", 
+                        value.x.0,
+                        value.y.0,
+                        position,
+                        below,
+                        landscapes[below].last().unwrap().x.0,
+                        landscapes[below].last().unwrap().y.0,
+                    ); 
+                }
         }
         landscapes[position].push(value);
     }
@@ -361,17 +376,17 @@ fn handle_intersection(state: &mut State, event: &Event) -> Option<Event>{
 
 
 fn handle_death(state: &mut State, event: &Event){
-    let pos = state.mountains[event.parent_mountain_id]
+    let _pos = state.mountains[event.parent_mountain_id]
         .position
         .expect("Death of dead mountain");
     // Check for floating point mess up on death/intersection Ordering
     // TODO: What is this???? feels like a bug and a bad hotfix
-    let weird_q = &mut VecDeque::new();
-    if pos != state.status.len() - 1 {
-        while pos < state.status.len() - 1 {
-            weird_q.push_back(state.status.pop_back().unwrap());
-        }
-    }
+    // let weird_q = &mut VecDeque::new();
+    // if pos != state.status.len() - 1 {
+    //     while pos < state.status.len() - 1 {
+    //         weird_q.push_back(state.status.pop_back().unwrap());
+    //     }
+    // }
     // Add to ouput if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
@@ -383,17 +398,17 @@ fn handle_death(state: &mut State, event: &Event){
     state.status.pop_back();
     state.mountains[event.parent_mountain_id].position = None;
     // TODO: Same here???? L -17
-    while !weird_q.is_empty() {
-        let element = weird_q.pop_back().unwrap();
-        state.mountains[element].position = Some(state.mountains[element].position.unwrap() - 1);
-        log_to_landscape(
-            state.mountains[element],
-            event.value,
-            &mut state.landscapes,
-            state.k,
-            );
-        state.status.push_back(element);
-    }
+    // while !weird_q.is_empty() {
+    //     let element = weird_q.pop_back().unwrap();
+    //     state.mountains[element].position = Some(state.mountains[element].position.unwrap() - 1);
+    //     log_to_landscape(
+    //         state.mountains[element],
+    //         event.value,
+    //         &mut state.landscapes,
+    //         state.k,
+    //         );
+    //     state.status.push_back(element);
+    // }
 }
 
 fn handle_down(state: &mut State, event: &Event){
