@@ -273,6 +273,7 @@ fn log_to_landscape(
     event: &Event,
     landscapes: &mut [Vec<(f32,f32)>],
     k: usize,
+    mountain2: Option<&PersistenceMountain>
 ) {
     let position = mountain.position.expect("Mountain with event is dead");
     if position < k {
@@ -280,6 +281,13 @@ fn log_to_landscape(
         landscapes[position].push((event.value.x.0, event.value.y.0));
     }
 
+    if let Some(m2) = mountain2{
+        let position = m2.position.expect("Mountain with event is dead");
+        if position < k {
+            // log_checks(m2, &event, landscapes, k, position);
+            landscapes[position].push((event.value.x.0, event.value.y.0));
+        }
+    }
 }
 
 fn find_intersection(
@@ -331,17 +339,19 @@ fn handle_up(state: &mut State, event: &Event){
     let position = state.status.len() - 1;
     state.mountains[event.parent_mountain_id].position = Some(position);
 
+    let parent_mountain_id = event.parent_mountain_id;
     // Add to output if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
-        event,
+        &event,
         &mut state.landscapes,
         state.k,
+        None
         );
     // Check and handle all intersections
     let new_event = find_intersection(
         &state.status,
-        event.parent_mountain_id,
+        parent_mountain_id,
         state.mountains,
         &Direction::Above,
         );
@@ -357,6 +367,7 @@ fn handle_intersection(state: &mut State, event: Event){
         let parent_mountain2_id = event
             .parent_mountain2_id
             .expect("Intersection event with no second mountain");
+        let parent_mountain_id = event.parent_mountain_id;
 
         // Add to ouput if needed
         log_to_landscape(
@@ -364,24 +375,24 @@ fn handle_intersection(state: &mut State, event: Event){
             &event,
             &mut state.landscapes,
             state.k,
+            Some(state.mountains[parent_mountain2_id])
         );
-        log_to_landscape(
-            state.mountains[parent_mountain2_id], 
-            &event, 
-            &mut state.landscapes, 
-            state.k
-        );
-        let (upper_id, lower_id) = 
-        if state.mountains[event.parent_mountain_id].slope_rising {
-            // let upper_id = 
-            (parent_mountain2_id,
-            // let lower_id = 
-                event.parent_mountain_id)
+        // log_to_landscape(
+        //     state.mountains[parent_mountain2_id], 
+        //     event, 
+        //     &mut state.landscapes, 
+        //     state.k
+        // );
+        let lower_id = if state.mountains[parent_mountain_id].slope_rising {
+            parent_mountain_id
         } else{
-            // let upper_id = 
-            (event.parent_mountain_id,
-            // let lower_id = 
-                parent_mountain2_id)
+            parent_mountain2_id
+        // )
+        };
+        let upper_id = if state.mountains[parent_mountain_id].slope_rising {
+            parent_mountain2_id
+        } else{
+            parent_mountain_id
         };
         // Swap
         state.status.swap(
@@ -428,9 +439,10 @@ fn handle_death(state: &mut State, event: &Event){
     // Add to ouput if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
-        event,
+        &event,
         &mut state.landscapes,
         state.k,
+        None
         );
     // remove and disable
     state.status.pop_back();
@@ -452,18 +464,20 @@ fn handle_death(state: &mut State, event: &Event){
 fn handle_down(state: &mut State, event: &Event){
     // Update status structures
     state.mountains[event.parent_mountain_id].slope_rising = false;
+    let parent_mountain_id = event.parent_mountain_id;
 
     // Add to ouput if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
-        event,
+        &event,
         &mut state.landscapes,
         state.k,
+        None
         );
     // Check for intersections
     let new_event = find_intersection(
         &state.status,
-        event.parent_mountain_id,
+        parent_mountain_id,
         state.mountains,
         &Direction::Below,
         );
