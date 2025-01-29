@@ -202,73 +202,84 @@ fn intersects_with_neighbor(m1: &PersistenceMountain, m2: &PersistenceMountain) 
         // slope change or do not matter
         Some(i) => match i {
             LineIntersection::SinglePoint { intersection: _, is_proper: _ } |
-            LineIntersection::Collinear { intersection: _ } => None
+                LineIntersection::Collinear { intersection: _ } => None
 
         },
         _ => None
     }
 }
 
-fn float_point_check(p1: PointOrd, p2:PointOrd)-> bool{
-        (p1.x.0 - p2.x.0).abs() < f32::EPSILON && 
-                (p1.y.0 - p2.y.0).abs() < f32::EPSILON 
+fn float_point_check(p1: &PointOrd, p2: &PointOrd)-> bool{
+    (p1.x.0 - p2.x.0).abs() < f32::EPSILON && 
+        (p1.y.0 - p2.y.0).abs() < f32::EPSILON 
+}
+
+fn log_checks(
+    _mountain: &PersistenceMountain,
+    event: &Event,
+    landscapes: &[Vec<PointOrd>],
+    _k: usize,
+    position: usize
+    ){
+        // Don't log points twice This is fine to prevent ordering problems if start and end points
+        // are the same, avoids perfect ordering
+        // if ! landscapes[*position].is_empty(){
+        //     assert_ne!(*landscapes[*position].last().unwrap(), event.value);
+        // }
+        // Ensure points are increasing x (except if points are exactly the same)
+        if ! landscapes[position].is_empty(){
+            if float_point_check(landscapes[position].last().unwrap(), &event.value) {
+                // Ignore, this is fine. They are the same
+            }
+            else{
+                assert!(landscapes[position].last().unwrap().x.0 < event.value.x.0,
+                "Last x in landscape {} is ({},{}) but new point to be added has an x of ({},{})", 
+                position,
+                landscapes[position].last().unwrap().x.0, 
+                landscapes[position].last().unwrap().y.0, 
+                event.value.x.0,
+                event.value.y.0
+                ); 
+            }
+        }
+        // Ensure birth/death is in bottom most landscape (exception if the nearest is a tie, they
+        // are just dieing out of order and the other must die right after)
+        let below = position + 1;
+        if event.value.y.0 == 0.0 &&
+            below < landscapes.len() && 
+            ! landscapes[below].is_empty(){
+                if float_point_check(landscapes[below].last().unwrap(), landscapes[position].last().unwrap()){
+                    // This is fine, ignore. See above comment
+                }
+                else{
+                    // println!("{:?}", landscapes[below].last().unwrap());
+                    // println!("{:?}", landscapes[position].last().unwrap());
+                    // println!("{:?}", mountain);
+                    assert!(landscapes[below].last().unwrap().y.0 == 0.0,
+                        "Attempting to add a birth/death ({},{}) to higher landscape {} when {} is non zero ({},{})", 
+                        event.value.x.0,
+                        event.value.y.0,
+                        position,
+                        below,
+                        landscapes[below].last().unwrap().x.0,
+                        landscapes[below].last().unwrap().y.0,
+                    ); 
+                }
+        }
 }
 
 fn log_to_landscape(
     mountain: &PersistenceMountain,
-    value: & PointOrd,
-    landscapes: &mut [Vec<PointOrd>],
+    event: &Event,
+    landscapes: &mut [Vec<(f32,f32)>],
     k: usize,
 ) {
     let position = mountain.position.expect("Mountain with event is dead");
     if position < k {
-        // Don't log points twice This is fine to prevent ordering problems if start and end points
-        // are the same, avoids perfect ordering
-        // if ! landscapes[position].is_empty(){
-        //     assert_ne!(*landscapes[position].last().unwrap(), value);
-        // }
-        // Ensure points are increasing x (except if points are exactly the same)
-        // if ! landscapes[position].is_empty(){
-        //     if float_point_check(*landscapes[position].last().unwrap(), value) {
-        //         // Ignore, this is fine. They are the same
-        //     }
-        //     else{
-        //         assert!(landscapes[position].last().unwrap().x.0 < value.x.0,
-        //         "Last x in landscape {} is ({},{}) but new point to be added has an x of ({},{})", 
-        //         position,
-        //         landscapes[position].last().unwrap().x.0, 
-        //         landscapes[position].last().unwrap().y.0, 
-        //         value.x.0,
-        //         value.y.0
-        //         ); 
-        //     }
-        // }
-        // // Ensure birth/death is in bottom most landscape (exception if the nearest is a tie, they
-        // // are just dieing out of order and the other must die right after)
-        // let below = position + 1;
-        // if value.y.0 == 0.0 &&
-        //     below < landscapes.len() && 
-        //     ! landscapes[below].is_empty(){
-        //         if float_point_check(*landscapes[below].last().unwrap(), *landscapes[position].last().unwrap()){
-        //             // This is fine, ignore. See above comment
-        //         }
-        //         else{
-        //             // println!("{:?}", landscapes[below].last().unwrap());
-        //             // println!("{:?}", landscapes[position].last().unwrap());
-        //             // println!("{:?}", mountain);
-        //             assert!(landscapes[below].last().unwrap().y.0 == 0.0,
-        //                 "Attempting to add a birth/death ({},{}) to higher landscape {} when {} is non zero ({},{})", 
-        //                 value.x.0,
-        //                 value.y.0,
-        //                 position,
-        //                 below,
-        //                 landscapes[below].last().unwrap().x.0,
-        //                 landscapes[below].last().unwrap().y.0,
-        //             ); 
-        //         }
-        // }
-        landscapes[position].push(value.clone());
+        // log_checks(mountain, &event, landscapes, k, position);
+        landscapes[position].push((event.value.x.0, event.value.y.0));
     }
+
 }
 
 fn find_intersection(
@@ -303,7 +314,7 @@ fn find_intersection(
 }
 
 #[must_use]
-pub fn empty_landscape(k: usize) -> Vec<Vec<PointOrd>>{
+pub fn empty_landscape(k: usize) -> Vec<Vec<(f32,f32)>>{
     let mut landscapes = Vec::with_capacity(k);
     (0..k).for_each(|_| {
         let arr = Vec::new();
@@ -319,10 +330,11 @@ fn handle_up(state: &mut State, event: &Event){
     assert!(start_len + 1 == state.status.len());
     let position = state.status.len() - 1;
     state.mountains[event.parent_mountain_id].position = Some(position);
+
     // Add to output if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
-        & event.value,
+        event,
         &mut state.landscapes,
         state.k,
         );
@@ -339,36 +351,37 @@ fn handle_up(state: &mut State, event: &Event){
 }
 
 fn handle_intersection(state: &mut State, event: Event){
-    let weird_q = &mut VecDeque::new();
-    weird_q.push_back(event);
-    while ! weird_q.is_empty(){
-        let event = weird_q.pop_front().unwrap();
+    state.weird_q.push_back(event);
+    while ! state.weird_q.is_empty(){
+        let event = state.weird_q.pop_front().unwrap();
         let parent_mountain2_id = event
             .parent_mountain2_id
             .expect("Intersection event with no second mountain");
+
         // Add to ouput if needed
         log_to_landscape(
             state.mountains[event.parent_mountain_id],
-            & event.value,
+            &event,
             &mut state.landscapes,
             state.k,
         );
         log_to_landscape(
             state.mountains[parent_mountain2_id], 
-            & event.value, 
+            &event, 
             &mut state.landscapes, 
             state.k
         );
-        let lower_id = if state.mountains[event.parent_mountain_id].slope_rising {
-            event.parent_mountain_id
+        let (upper_id, lower_id) = 
+        if state.mountains[event.parent_mountain_id].slope_rising {
+            // let upper_id = 
+            (parent_mountain2_id,
+            // let lower_id = 
+                event.parent_mountain_id)
         } else{
-            parent_mountain2_id
-        // )
-        };
-        let upper_id = if state.mountains[event.parent_mountain_id].slope_rising {
-            parent_mountain2_id
-        } else{
-            event.parent_mountain_id
+            // let upper_id = 
+            (event.parent_mountain_id,
+            // let lower_id = 
+                parent_mountain2_id)
         };
         // Swap
         state.status.swap(
@@ -386,13 +399,13 @@ fn handle_intersection(state: &mut State, event: Event){
             find_intersection(&state.status, lower_id, state.mountains, &Direction::Above)
         {
             // handle_intersection(state, &new_event);
-            weird_q.push_back(new_event);
+            state.weird_q.push_back(new_event);
         }
         if let Some(new_event) =
             find_intersection(&state.status, upper_id, state.mountains, &Direction::Below)
         {
             // handle_intersection(state, new_event);
-            weird_q.push_back(new_event);
+            state.weird_q.push_back(new_event);
         }
     }
 }
@@ -410,16 +423,18 @@ fn handle_death(state: &mut State, event: &Event){
     //         weird_q.push_back(state.status.pop_back().unwrap());
     //     }
     // }
+    let parent_mountain_id = event.parent_mountain_id;
+
     // Add to ouput if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
-        & event.value,
+        event,
         &mut state.landscapes,
         state.k,
         );
     // remove and disable
     state.status.pop_back();
-    state.mountains[event.parent_mountain_id].position = None;
+    state.mountains[parent_mountain_id].position = None;
     // TODO: Same here???? L -17
     // while !weird_q.is_empty() {
     //     let element = weird_q.pop_back().unwrap();
@@ -437,10 +452,11 @@ fn handle_death(state: &mut State, event: &Event){
 fn handle_down(state: &mut State, event: &Event){
     // Update status structures
     state.mountains[event.parent_mountain_id].slope_rising = false;
+
     // Add to ouput if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
-        & event.value,
+        event,
         &mut state.landscapes,
         state.k,
         );
@@ -462,16 +478,17 @@ fn handle_down(state: &mut State, event: &Event){
 struct State<'a>{
     status: VecDeque<usize>,
     mountains: &'a mut Vec<&'a mut PersistenceMountain>,
-    landscapes: Vec<Vec<PointOrd>>,
+    landscapes: Vec<Vec<(f32,f32)>>,
     events: BinaryHeap<Event>,
     k: usize,
+    weird_q: VecDeque<Event>
 }
 
 /// # Panics
 ///
 /// Will panic if invalid state is discovered during generation
 #[must_use]
-pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<PointOrd>> {
+pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<(f32,f32)>> {
     let mut binding = generate_mountains(bd_pairs);
     let mut mountains: Vec<&mut PersistenceMountain> 
         = binding.iter_mut().collect();
@@ -482,12 +499,12 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
         mountains: &mut mountains,
         landscapes: empty_landscape(k),
         k,
+        weird_q: VecDeque::new(),
     };
 
     while let Some(event) = state.events.pop(){
         if debug{
             println!("{event:?}");
-            // println!("\n{:?}\n", state.events);
         }
         match event.event_type {
             EventType::Up => {

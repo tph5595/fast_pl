@@ -58,7 +58,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut wtr = Writer::from_path(args.csv)?;
         for landscape in &landscapes {
             for point in landscape {
-                wtr.write_record(&[point.x.0.to_string(), point.y.0.to_string()])?;
+                wtr.write_record(&[point.0.to_string(), point.1.to_string()])?;
             }
             wtr.write_record(["", ""])?;
         }

@@ -15,16 +15,13 @@ use crate::barcode;
 /// # Errors
 ///
 /// Will return 'Err' if failed to compute persistencelandscape from `bd_pairs`
-pub fn pairs_to_landscape(bd_pairs: Vec<BirthDeath>, k:usize, debug:bool) -> Result<Vec<Vec<persistencelandscape::PointOrd>>, &'static str>{
+pub fn pairs_to_landscape(bd_pairs: Vec<BirthDeath>, k:usize, debug:bool) -> Result<Vec<Vec<(f32,f32)>>, &'static str>{
     let bd_pairs: Vec<BirthDeath> = bd_pairs
         .into_iter()
         .filter(|bd| (bd.birth - bd.death).abs() > f32::EPSILON)
         .collect();
     if bd_pairs.is_empty() {
-        if debug {
-            println!("No BirthDeath pairs found in file");
-        }
-        return Ok(persistencelandscape::empty_landscape(k));
+        return Err("No BirthDeath pairs found in file");
     }
 
     if debug {
@@ -41,21 +38,21 @@ pub fn pairs_to_landscape(bd_pairs: Vec<BirthDeath>, k:usize, debug:bool) -> Res
     Ok(landscape)
 }
 
-fn area_under_line_segment(a: &persistencelandscape::PointOrd, b: &persistencelandscape::PointOrd) ->f32 {
-    let height = (a.y.0 - b.y.0).abs();
-    let base = a.x.0 - b.x.0;
+fn area_under_line_segment(a: &(f32,f32), b: &(f32,f32)) ->f32 {
+    let height = (a.1 - b.1).abs();
+    let base = a.0 - b.0;
     let triangle = (height * base) / 2.0;
     assert!(triangle > 0.0);
 
     let s1 = base;
-    let s2 = cmp::min(FloatOrd(a.y.0), FloatOrd(b.y.0)).0;
+    let s2 = cmp::min(FloatOrd(a.1), FloatOrd(b.1)).0;
     let rectangle = s1 * s2;
     assert!(rectangle >= 0.0);
 
     triangle + rectangle
 }
 
-fn landscape_norm(landscape: &[persistencelandscape::PointOrd]) -> f32 {
+fn landscape_norm(landscape: &[(f32,f32)]) -> f32 {
     landscape
         .iter()
         .zip(landscape.iter().skip(1))
@@ -74,7 +71,7 @@ where
 ///
 /// Will panic if areas are not strictly decreasing or equal
 #[must_use]
-pub fn l2_norm(landscapes: &[Vec<persistencelandscape::PointOrd>]) -> f32 {
+pub fn l2_norm(landscapes: &[Vec<(f32,f32)>]) -> f32 {
     let areas = landscapes
         .iter()
         .map(|l| FloatOrd(landscape_norm(l)))
