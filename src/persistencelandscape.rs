@@ -343,7 +343,7 @@ fn handle_up(state: &mut State, event: &Event){
     // Add to output if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
-        &event,
+        event,
         &mut state.landscapes,
         state.k,
         None
@@ -439,7 +439,7 @@ fn handle_death(state: &mut State, event: &Event){
     // Add to ouput if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
-        &event,
+        event,
         &mut state.landscapes,
         state.k,
         None
@@ -469,7 +469,7 @@ fn handle_down(state: &mut State, event: &Event){
     // Add to ouput if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
-        &event,
+        event,
         &mut state.landscapes,
         state.k,
         None

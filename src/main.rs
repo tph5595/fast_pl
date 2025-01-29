@@ -36,6 +36,9 @@ struct Args {
     /// Save to CSV
     #[clap(short, long, value_parser, default_value = "")]
     csv: String,
+    /// Disables filtering
+    #[clap(short, long, value_parser)]
+    disable_filter: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -49,7 +52,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(Result::unwrap)
         .collect();
 
-    let landscapes = fast_pl::rpls::pairs_to_landscape(bd_paris, args.k, args.debug)?;
+    let landscapes = fast_pl::rpls::pairs_to_landscape(bd_paris, args.k, args.debug, args.disable_filter)?;
 
     let elapsed = now.elapsed();
     println!("Elapsed: {elapsed:.?}");
