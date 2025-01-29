@@ -41,7 +41,7 @@ pub fn pairs_to_landscape(bd_pairs: Vec<BirthDeath>, k:usize, debug:bool) -> Res
     Ok(landscape)
 }
 
-fn area_under_line_segment(a: persistencelandscape::PointOrd, b: persistencelandscape::PointOrd) ->f32 {
+fn area_under_line_segment(a: &persistencelandscape::PointOrd, b: &persistencelandscape::PointOrd) ->f32 {
     let height = (a.y.0 - b.y.0).abs();
     let base = a.x.0 - b.x.0;
     let triangle = (height * base) / 2.0;
@@ -59,7 +59,7 @@ fn landscape_norm(landscape: &[persistencelandscape::PointOrd]) -> f32 {
     landscape
         .iter()
         .zip(landscape.iter().skip(1))
-        .map(|(&a, &b)| area_under_line_segment(a, b))
+        .map(|(a, b)| area_under_line_segment(a, b))
         .sum::<f32>()
 }
 

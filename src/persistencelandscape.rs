@@ -23,7 +23,7 @@ struct PersistenceMountain {
     id: usize,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PointOrd {
     pub x: FloatOrd<f32>,
     pub y: FloatOrd<f32>,
@@ -139,19 +139,19 @@ fn generate_initial_events(mountains: &Vec<&mut PersistenceMountain>) -> Vec<Eve
              }| {
                 vec![
                     Event {
-                        value: *birth,
+                        value: birth.clone(),
                         event_type: EventType::Up,
                         parent_mountain_id: *id,
                         parent_mountain2_id: None,
                     },
                     Event {
-                        value: *middle,
+                        value: middle.clone(),
                         event_type: EventType::Down,
                         parent_mountain_id: *id,
                         parent_mountain2_id: None,
                     },
                     Event {
-                        value: *death,
+                        value: death.clone(),
                         event_type: EventType::Death,
                         parent_mountain_id: *id,
                         parent_mountain2_id: None,
@@ -216,7 +216,7 @@ fn float_point_check(p1: PointOrd, p2:PointOrd)-> bool{
 
 fn log_to_landscape(
     mountain: &PersistenceMountain,
-    value: PointOrd,
+    value: & PointOrd,
     landscapes: &mut [Vec<PointOrd>],
     k: usize,
 ) {
@@ -267,7 +267,7 @@ fn log_to_landscape(
         //             ); 
         //         }
         // }
-        landscapes[position].push(value);
+        landscapes[position].push(value.clone());
     }
 }
 
@@ -322,7 +322,7 @@ fn handle_up(state: &mut State, event: &Event){
     // Add to output if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
-        event.value,
+        & event.value,
         &mut state.landscapes,
         state.k,
         );
@@ -349,13 +349,13 @@ fn handle_intersection(state: &mut State, event: Event){
         // Add to ouput if needed
         log_to_landscape(
             state.mountains[event.parent_mountain_id],
-            event.value,
+            & event.value,
             &mut state.landscapes,
             state.k,
         );
         log_to_landscape(
             state.mountains[parent_mountain2_id], 
-            event.value, 
+            & event.value, 
             &mut state.landscapes, 
             state.k
         );
@@ -413,7 +413,7 @@ fn handle_death(state: &mut State, event: &Event){
     // Add to ouput if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
-        event.value,
+        & event.value,
         &mut state.landscapes,
         state.k,
         );
@@ -440,7 +440,7 @@ fn handle_down(state: &mut State, event: &Event){
     // Add to ouput if needed
     log_to_landscape(
         state.mountains[event.parent_mountain_id],
-        event.value,
+        & event.value,
         &mut state.landscapes,
         state.k,
         );
