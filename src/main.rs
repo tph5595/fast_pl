@@ -9,6 +9,7 @@ use clap::Parser;
 use csv::Writer;
 use std::error::Error;
 use std::fs;
+use std::time::Instant;
 
 /// Generates the PL for a set of birth death pairs
 #[derive(Parser, Debug)]
@@ -40,6 +41,7 @@ struct Args {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
+    let now = Instant::now();
     let bd_paris: Vec<fast_pl::birthdeath::BirthDeath> = fs::read_to_string(args.name)?
         .lines()
         .filter(|s| !s.contains("inf") && !s.is_empty())
@@ -48,6 +50,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         .collect();
 
     let landscapes = fast_pl::rpls::pairs_to_landscape(bd_paris, args.k, args.debug)?;
+
+    let elapsed = now.elapsed();
+    println!("Elapsed: {elapsed:.?}");
 
     if !args.csv.is_empty() {
         let mut wtr = Writer::from_path(args.csv)?;
@@ -71,7 +76,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 #[cfg(test)]
 mod tests {
-    fn test_runner(k: usize, bd_pairs_vec: Vec<(f64, f64)>, answer_vec: Vec<Vec<(f64, f64)>>) {
+    fn test_runner(k: usize, bd_pairs_vec: Vec<(f32, f32)>, answer_vec: Vec<Vec<(f32, f32)>>) {
         let bd_pairs = bd_pairs_vec
             .into_iter()
             .map(|(x, y)| fast_pl::birthdeath::BirthDeath { birth: x, death: y })

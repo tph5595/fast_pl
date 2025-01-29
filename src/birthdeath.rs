@@ -9,8 +9,8 @@ use std::str::FromStr;
 
 #[derive(Debug)]
 pub struct BirthDeath {
-    pub birth: f64,
-    pub death: f64,
+    pub birth: f32,
+    pub death: f32,
 }
 
 impl FromStr for BirthDeath {
