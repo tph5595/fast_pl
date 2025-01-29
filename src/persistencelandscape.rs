@@ -13,7 +13,7 @@ use geo::{
 use std::cmp::min;
 use std::collections::{BinaryHeap, VecDeque};
 
-#[derive(Debug)]//, Clone, Copy)]
+#[derive(Debug)]
 struct PersistenceMountain {
     position: Option<usize>,
     slope_rising: bool,
@@ -41,13 +41,13 @@ impl PartialOrd for PointOrd {
     }
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq)]
 enum Direction {
     Above,
     Below,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum EventType {
     Death,
     Up,
@@ -55,7 +55,7 @@ enum EventType {
     Intersection
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 struct Event {
     value: PointOrd,
     event_type: EventType,
@@ -126,7 +126,7 @@ fn generate_mountains(bd_pairs: Vec<BirthDeath>) -> Vec<PersistenceMountain> {
         .collect::<Vec<PersistenceMountain>>()
 }
 
-fn generate_initial_events(mountains: &mut Vec<&mut PersistenceMountain>) -> Vec<Event> {
+fn generate_initial_events(mountains: &Vec<&mut PersistenceMountain>) -> Vec<Event> {
     mountains
         .iter()
         .flat_map(
@@ -180,8 +180,8 @@ const fn current_segment_end(mountain: &PersistenceMountain) -> (f32, f32) {
 
 fn create_line_segment(mountain: &PersistenceMountain) -> Line<f32> {
     Line {
-        start: current_segment_start(&mountain).into(),
-        end: current_segment_end(&mountain).into(),
+        start: current_segment_start(mountain).into(),
+        end: current_segment_end(mountain).into(),
     }
 }
 
@@ -189,7 +189,7 @@ fn intersects_with_neighbor(m1: &PersistenceMountain, m2: &PersistenceMountain) 
     if m1.slope_rising == m2.slope_rising {
         return None;
     }
-    let inter = line_intersection(create_line_segment(&m1), create_line_segment(&m2));
+    let inter = line_intersection(create_line_segment(m1), create_line_segment(m2));
     match inter {
         Some(LineIntersection::SinglePoint {
             intersection: Coord { x, y },
@@ -274,12 +274,12 @@ fn log_to_landscape(
 fn find_intersection(
     status: &VecDeque<usize>,
     parent_mountain_id: usize,
-    mountains: &mut Vec<&mut PersistenceMountain>,
-    direction_to_check: Direction,
+    mountains: &[&mut PersistenceMountain],
+    direction_to_check: &Direction,
 ) -> Option<Event> {
     let position = mountains[parent_mountain_id].position.expect("Intersection check for dead mountain");
     // Stop underflow of unsigned number
-    if position == 0 && direction_to_check == Direction::Above {
+    if position == 0 && *direction_to_check == Direction::Above {
         return None;
     }
     let neighbor_index = match direction_to_check {
@@ -288,7 +288,7 @@ fn find_intersection(
     };
 
     if let Some(neighbor) = status.get(neighbor_index) {
-        if let Some(intersection) = intersects_with_neighbor(&mountains[parent_mountain_id], &mountains[*neighbor]) {
+        if let Some(intersection) = intersects_with_neighbor(mountains[parent_mountain_id], mountains[*neighbor]) {
            return Some( Event {
                 value: intersection,
                 event_type: EventType::Intersection,
@@ -321,7 +321,7 @@ fn handle_up(state: &mut State, event: &Event){
     state.mountains[event.parent_mountain_id].position = Some(position);
     // Add to output if needed
     log_to_landscape(
-        &state.mountains[event.parent_mountain_id],
+        state.mountains[event.parent_mountain_id],
         event.value,
         &mut state.landscapes,
         state.k,
@@ -331,7 +331,7 @@ fn handle_up(state: &mut State, event: &Event){
         &state.status,
         event.parent_mountain_id,
         state.mountains,
-        Direction::Above,
+        &Direction::Above,
         );
     if let Some(intersection) = new_event{
         handle_intersection(state, intersection);
@@ -383,13 +383,13 @@ fn handle_intersection(state: &mut State, event: Event){
         // Must check both ways because of no sorting, intersections can be discovered in both
         // directions
         if let Some(new_event) =
-            find_intersection(&state.status, lower_id, state.mountains, Direction::Above)
+            find_intersection(&state.status, lower_id, state.mountains, &Direction::Above)
         {
             // handle_intersection(state, &new_event);
             weird_q.push_back(new_event);
         }
         if let Some(new_event) =
-            find_intersection(&state.status, upper_id, state.mountains, Direction::Below)
+            find_intersection(&state.status, upper_id, state.mountains, &Direction::Below)
         {
             // handle_intersection(state, new_event);
             weird_q.push_back(new_event);
@@ -412,7 +412,7 @@ fn handle_death(state: &mut State, event: &Event){
     // }
     // Add to ouput if needed
     log_to_landscape(
-        & state.mountains[event.parent_mountain_id],
+        state.mountains[event.parent_mountain_id],
         event.value,
         &mut state.landscapes,
         state.k,
@@ -439,7 +439,7 @@ fn handle_down(state: &mut State, event: &Event){
     state.mountains[event.parent_mountain_id].slope_rising = false;
     // Add to ouput if needed
     log_to_landscape(
-        & state.mountains[event.parent_mountain_id],
+        state.mountains[event.parent_mountain_id],
         event.value,
         &mut state.landscapes,
         state.k,
@@ -449,7 +449,7 @@ fn handle_down(state: &mut State, event: &Event){
         &state.status,
         event.parent_mountain_id,
         state.mountains,
-        Direction::Below,
+        &Direction::Below,
         );
     if let Some(intersection) = new_event{
         handle_intersection(state, intersection);
@@ -477,7 +477,7 @@ pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<Poi
         = binding.iter_mut().collect();
 
     let mut state = State{
-        events: BinaryHeap::from(generate_initial_events(&mut mountains)),
+        events: BinaryHeap::from(generate_initial_events(&mountains)),
         status: VecDeque::new(),
         mountains: &mut mountains,
         landscapes: empty_landscape(k),
