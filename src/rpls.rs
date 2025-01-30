@@ -27,12 +27,16 @@ pub fn pairs_to_landscape(bd_pairs: Vec<BirthDeath>, k:usize, debug:bool, disabl
     if debug {
         println!("{bd_pairs:?}");
     }
-    // if !disable_filter{
+    let filtered_pairs = if disable_filter{
+        bd_pairs
+    }
+    else{
         let filtered_pairs = barcode::filter(bd_pairs, k);
         if debug {
             println!("{filtered_pairs:?}");
         }
-    // }
+        filtered_pairs
+    };
     let landscape = persistencelandscape::generate(filtered_pairs, k, debug);
     if debug {
         println!("{landscape:?}");

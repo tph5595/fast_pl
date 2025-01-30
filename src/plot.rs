@@ -5,7 +5,6 @@
      clippy::cargo,
  )]
 
-use crate::persistencelandscape::PointOrd;
 use float_ord::FloatOrd;
 use plotters::prelude::*;
 
@@ -19,14 +18,14 @@ use plotters::prelude::*;
 ///
 /// Will error and propogate up on same conditions as panics
 pub fn landscape(
-    landscape: Vec<Vec<PointOrd>>,
+    landscape: Vec<Vec<(f32,f32)>>,
     height: u32,
     width: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Set up the data
     let to_plot: Vec<Vec<(f32, f32)>> = landscape
         .into_iter()
-        .map(|s| s.into_iter().map(|PointOrd { x, y }| (x.0, y.0)).collect())
+        // .map(|s| s.into_iter().map(|PointOrd { x, y }| (x.0, y.0)).collect())
         .collect();
     // Get bounds
     let (x_lower, x_upper, y_lower, y_upper) = to_plot

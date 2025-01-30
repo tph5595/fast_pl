@@ -209,18 +209,18 @@ fn intersects_with_neighbor(m1: &PersistenceMountain, m2: &PersistenceMountain) 
     }
 }
 
-fn float_point_check(p1: &PointOrd, p2: &PointOrd)-> bool{
-    (p1.x.0 - p2.x.0).abs() < f32::EPSILON && 
-        (p1.y.0 - p2.y.0).abs() < f32::EPSILON 
+fn float_point_check(p1: (f32,f32), p2: (f32,f32))-> bool{
+    (p1.0 - p2.0).abs() < f32::EPSILON && 
+        (p1.1 - p2.1).abs() < f32::EPSILON 
 }
 
 fn log_checks(
     _mountain: &PersistenceMountain,
     event: &Event,
-    landscapes: &[Vec<PointOrd>],
+    landscapes: &[Vec<(f32,f32)>],
     _k: usize,
     position: usize
-    ){
+    )-> bool{
         // Don't log points twice This is fine to prevent ordering problems if start and end points
         // are the same, avoids perfect ordering
         // if ! landscapes[*position].is_empty(){
@@ -228,19 +228,20 @@ fn log_checks(
         // }
         // Ensure points are increasing x (except if points are exactly the same)
         if ! landscapes[position].is_empty(){
-            if float_point_check(landscapes[position].last().unwrap(), &event.value) {
+            if float_point_check(*landscapes[position].last().unwrap(), (event.value.x.0, event.value.y.0)) {
                 // Ignore, this is fine. They are the same
+                return false;
             }
-            else{
-                assert!(landscapes[position].last().unwrap().x.0 < event.value.x.0,
+            // else{
+                assert!(landscapes[position].last().unwrap().0 < event.value.x.0,
                 "Last x in landscape {} is ({},{}) but new point to be added has an x of ({},{})", 
                 position,
-                landscapes[position].last().unwrap().x.0, 
-                landscapes[position].last().unwrap().y.0, 
+                landscapes[position].last().unwrap().0, 
+                landscapes[position].last().unwrap().1, 
                 event.value.x.0,
                 event.value.y.0
                 ); 
-            }
+            // }
         }
         // Ensure birth/death is in bottom most landscape (exception if the nearest is a tie, they
         // are just dieing out of order and the other must die right after)
@@ -248,24 +249,25 @@ fn log_checks(
         if event.value.y.0 == 0.0 &&
             below < landscapes.len() && 
             ! landscapes[below].is_empty(){
-                if float_point_check(landscapes[below].last().unwrap(), landscapes[position].last().unwrap()){
+                if float_point_check(*landscapes[below].last().unwrap(), *landscapes[position].last().unwrap()){
                     // This is fine, ignore. See above comment
                 }
                 else{
                     // println!("{:?}", landscapes[below].last().unwrap());
                     // println!("{:?}", landscapes[position].last().unwrap());
                     // println!("{:?}", mountain);
-                    assert!(landscapes[below].last().unwrap().y.0 == 0.0,
+                    assert!(landscapes[below].last().unwrap().1 == 0.0,
                         "Attempting to add a birth/death ({},{}) to higher landscape {} when {} is non zero ({},{})", 
                         event.value.x.0,
                         event.value.y.0,
                         position,
                         below,
-                        landscapes[below].last().unwrap().x.0,
-                        landscapes[below].last().unwrap().y.0,
+                        landscapes[below].last().unwrap().0,
+                        landscapes[below].last().unwrap().1,
                     ); 
                 }
         }
+        true
 }
 
 fn log_to_landscape(
@@ -276,16 +278,16 @@ fn log_to_landscape(
     mountain2: Option<&PersistenceMountain>
 ) {
     let position = mountain.position.expect("Mountain with event is dead");
-    if position < k {
-        // log_checks(mountain, &event, landscapes, k, position);
-        landscapes[position].push((event.value.x.0, event.value.y.0));
+    if position < k &&
+        log_checks(mountain, event, landscapes, k, position){
+            landscapes[position].push((event.value.x.0, event.value.y.0));
     }
 
     if let Some(m2) = mountain2{
         let position = m2.position.expect("Mountain with event is dead");
-        if position < k {
-            // log_checks(m2, &event, landscapes, k, position);
-            landscapes[position].push((event.value.x.0, event.value.y.0));
+        if position < k &&
+            log_checks(m2, event, landscapes, k, position){
+                landscapes[position].push((event.value.x.0, event.value.y.0));
         }
     }
 }
