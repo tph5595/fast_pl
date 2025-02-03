@@ -209,9 +209,13 @@ fn intersects_with_neighbor(m1: &PersistenceMountain, m2: &PersistenceMountain) 
     }
 }
 
+fn float_equal(a:f32, b:f32) -> bool{
+    (a - b).abs() < f32::EPSILON
+}
+
 fn float_point_check(p1: (f32,f32), p2: (f32,f32))-> bool{
-    (p1.0 - p2.0).abs() < f32::EPSILON && 
-        (p1.1 - p2.1).abs() < f32::EPSILON 
+    float_equal(p1.0, p2.0) && 
+        float_equal(p1.1, p2.1)
 }
 
 fn log_checks(
@@ -246,7 +250,7 @@ fn log_checks(
         // Ensure birth/death is in bottom most landscape (exception if the nearest is a tie, they
         // are just dieing out of order and the other must die right after)
         let below = position + 1;
-        if event.value.y.0 == 0.0 &&
+        if float_equal(event.value.y.0, 0.0) &&
             below < landscapes.len() && 
             ! landscapes[below].is_empty(){
                 if float_point_check(*landscapes[below].last().unwrap(), *landscapes[position].last().unwrap()){
@@ -256,7 +260,7 @@ fn log_checks(
                     // println!("{:?}", landscapes[below].last().unwrap());
                     // println!("{:?}", landscapes[position].last().unwrap());
                     // println!("{:?}", mountain);
-                    assert!(landscapes[below].last().unwrap().1 == 0.0,
+                    assert!(float_equal(landscapes[below].last().unwrap().1, 0.0),
                         "Attempting to add a birth/death ({},{}) to higher landscape {} when {} is non zero ({},{})", 
                         event.value.x.0,
                         event.value.y.0,

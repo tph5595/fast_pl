@@ -290,5 +290,32 @@ mod tests {
         ];
             test_runner(k, bd_pairs_vec, &answer_vec);
     }
+    #[test]
+    fn float_epsilon_intersection_landscape() {
+        fn type_of<T>(_: T) -> &'static str {
+            std::any::type_name::<T>()
+        }
+        let k = 2;
+        let bd_pairs_vec = vec![
+            (0.311_957_78, 0.469_108_1),
+            (0.161_545_02, 0.311_957_977),
+        ];
+        let answer_vec = vec![
+            vec![
+                (0.16154502,0.0),
+                (0.2367515,0.07520648),
+                (0.3119579,0.00000010430813),
+                (0.39053294,0.078575164),
+                (0.4691081,0.0),
+            ],
+            vec![
+                (0.31195778,0.0),
+                (0.3119579,0.00000010430813),
+            ],
+        ];
+            assert!("f32" == type_of(bd_pairs_vec[0].0), 
+                "This test only works with f32. create new test for condition if type changes");
+            test_runner(k, bd_pairs_vec, &answer_vec);
+    }
 
 }
