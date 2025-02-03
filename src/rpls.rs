@@ -15,10 +15,10 @@ use crate::barcode;
 /// # Errors
 ///
 /// Will return 'Err' if failed to compute persistencelandscape from `bd_pairs`
-pub fn pairs_to_landscape(bd_pairs: Vec<BirthDeath>, k:usize, debug:bool, disable_filter: bool) -> Result<Vec<Vec<(f32,f32)>>, &'static str>{
+pub fn pairs_to_landscape(bd_pairs: Vec<BirthDeath>, k:usize, debug:bool, disable_filter: bool) -> Result<Vec<Vec<(f64,f64)>>, &'static str>{
     let bd_pairs: Vec<BirthDeath> = bd_pairs
         .into_iter()
-        .filter(|bd| (bd.birth - bd.death).abs() > f32::EPSILON)
+        .filter(|bd| (bd.birth - bd.death).abs() > f64::EPSILON)
         .collect();
     if bd_pairs.is_empty() {
         return Err("No BirthDeath pairs found in file");
@@ -44,7 +44,7 @@ pub fn pairs_to_landscape(bd_pairs: Vec<BirthDeath>, k:usize, debug:bool, disabl
     Ok(landscape)
 }
 
-fn area_under_line_segment(a: (f32,f32), b: (f32,f32)) ->f32 {
+fn area_under_line_segment(a: (f64,f64), b: (f64,f64)) ->f64 {
     let height = (a.1 - b.1).abs();
     let base = a.0 - b.0;
     let triangle = (height * base) / 2.0;
@@ -58,12 +58,12 @@ fn area_under_line_segment(a: (f32,f32), b: (f32,f32)) ->f32 {
     triangle + rectangle
 }
 
-fn landscape_norm(landscape: &[(f32,f32)]) -> f32 {
+fn landscape_norm(landscape: &[(f64,f64)]) -> f64 {
     landscape
         .iter()
         .zip(landscape.iter().skip(1))
         .map(|(a, b)| area_under_line_segment(*a, *b))
-        .sum::<f32>()
+        .sum::<f64>()
 }
 
 fn is_sorted<T>(data: &[T]) -> bool
@@ -77,11 +77,11 @@ where
 ///
 /// Will panic if areas are not strictly decreasing or equal
 #[must_use]
-pub fn l2_norm(landscapes: &[Vec<(f32,f32)>]) -> f32 {
+pub fn l2_norm(landscapes: &[Vec<(f64,f64)>]) -> f64 {
     let areas = landscapes
         .iter()
         .map(|l| FloatOrd(landscape_norm(l)))
-        .collect::<Vec<FloatOrd<f32>>>();
+        .collect::<Vec<FloatOrd<f64>>>();
     assert!(is_sorted(& areas));
 
         areas.iter().map(|x| x.0).sum()
@@ -90,6 +90,6 @@ pub fn l2_norm(landscapes: &[Vec<(f32,f32)>]) -> f32 {
 /// # Errors
 ///
 /// Will return 'Err' if failed to compute persistencelandscape from `bd_pairs`
-pub fn pairs_to_l2_norm(bd_paris: Vec<BirthDeath>, k:usize, debug:bool, disable_filter: bool) -> Result<f32, &'static str>{
+pub fn pairs_to_l2_norm(bd_paris: Vec<BirthDeath>, k:usize, debug:bool, disable_filter: bool) -> Result<f64, &'static str>{
     Ok(l2_norm(pairs_to_landscape(bd_paris, k, debug, disable_filter)?.as_slice()))
 }

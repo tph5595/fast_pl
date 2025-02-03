@@ -8,7 +8,7 @@
 use crate::birthdeath::BirthDeath;
 use float_ord::FloatOrd;
 use geo::{
-    line_intersection::line_intersection, line_intersection::LineIntersection, Coord, Line,
+    line_intersection::line_intersection, line_intersection::LineIntersection, Coord, Line, coord
 };
 use std::cmp::min;
 use std::collections::{BinaryHeap, VecDeque};
@@ -25,8 +25,8 @@ struct PersistenceMountain {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PointOrd {
-    pub x: FloatOrd<f32>,
-    pub y: FloatOrd<f32>,
+    pub x: FloatOrd<f64>,
+    pub y: FloatOrd<f64>,
 }
 
 impl Ord for PointOrd {
@@ -95,7 +95,7 @@ impl PartialEq for Event {
 
 impl Eq for Event {}
 
-fn create_mountain(birth: f32, death: f32, index: usize) -> PersistenceMountain {
+fn create_mountain(birth: f64, death: f64, index: usize) -> PersistenceMountain {
     let half_dist = (death - birth) / 2.0;
 
     PersistenceMountain {
@@ -162,26 +162,38 @@ fn generate_initial_events(mountains: &Vec<&mut PersistenceMountain>) -> Vec<Eve
         .collect()
 }
 
-const fn current_segment_start(mountain: &PersistenceMountain) -> (f32, f32) {
+const fn current_segment_start(mountain: &PersistenceMountain) -> Coord {
     if mountain.slope_rising {
-        (mountain.birth.x.0, mountain.birth.y.0)
+        coord!{ 
+            x: mountain.birth.x.0,
+            y: mountain.birth.y.0 
+        }
     } else { 
-        (mountain.middle.x.0, mountain.middle.y.0)
+        coord!{ 
+            x: mountain.middle.x.0,
+            y: mountain.middle.y.0 
+        }
     }
 }
 
-const fn current_segment_end(mountain: &PersistenceMountain) -> (f32, f32) {
+const fn current_segment_end(mountain: &PersistenceMountain) -> Coord {
     if mountain.slope_rising {
-        (mountain.middle.x.0, mountain.middle.y.0)
+        coord!{ 
+            x: mountain.middle.x.0, 
+            y: mountain.middle.y.0 
+        }
     } else {
-        (mountain.death.x.0, mountain.death.y.0)
+        coord!{
+            x: mountain.death.x.0, 
+            y: mountain.death.y.0
+        }
     }
 }
 
-fn create_line_segment(mountain: &PersistenceMountain) -> Line<f32> {
+const fn create_line_segment(mountain: &PersistenceMountain) -> Line<f64> {
     Line {
-        start: current_segment_start(mountain).into(),
-        end: current_segment_end(mountain).into(),
+        start: current_segment_start(mountain),
+        end: current_segment_end(mountain),
     }
 }
 
@@ -209,11 +221,11 @@ fn intersects_with_neighbor(m1: &PersistenceMountain, m2: &PersistenceMountain) 
     }
 }
 
-fn float_equal(a:f32, b:f32) -> bool{
-    (a - b).abs() < f32::EPSILON
+fn float_equal(a:f64, b:f64) -> bool{
+    (a - b).abs() < f64::EPSILON
 }
 
-fn float_point_check(p1: (f32,f32), p2: (f32,f32))-> bool{
+fn float_point_check(p1: (f64,f64), p2: (f64,f64))-> bool{
     float_equal(p1.0, p2.0) && 
         float_equal(p1.1, p2.1)
 }
@@ -221,10 +233,11 @@ fn float_point_check(p1: (f32,f32), p2: (f32,f32))-> bool{
 fn log_checks(
     _mountain: &PersistenceMountain,
     event: &Event,
-    landscapes: &[Vec<(f32,f32)>],
+    landscapes: &[Vec<(f64,f64)>],
     _k: usize,
     position: usize
     )-> bool{
+    // return true;
         // Don't log points twice This is fine to prevent ordering problems if start and end points
         // are the same, avoids perfect ordering
         // if ! landscapes[*position].is_empty(){
@@ -277,7 +290,7 @@ fn log_checks(
 fn log_to_landscape(
     mountain: &PersistenceMountain,
     event: &Event,
-    landscapes: &mut [Vec<(f32,f32)>],
+    landscapes: &mut [Vec<(f64,f64)>],
     k: usize,
     mountain2: Option<&PersistenceMountain>
 ) {
@@ -314,21 +327,21 @@ fn find_intersection(
 
     if let Some(neighbor) = status.get(neighbor_index) {
         if let Some(intersection) = intersects_with_neighbor(mountains[parent_mountain_id], mountains[*neighbor]) {
-           return Some( Event {
+           let intersection = Event {
                 value: intersection,
                 event_type: EventType::Intersection,
                 parent_mountain_id,
                 parent_mountain2_id: Some(*neighbor),
-            });
+            };
             // println!("{intersection:?}");
-            // return Some(intersection);
+            return Some(intersection);
         }
     }
     None
 }
 
 #[must_use]
-pub fn empty_landscape(k: usize) -> Vec<Vec<(f32,f32)>>{
+pub fn empty_landscape(k: usize) -> Vec<Vec<(f64,f64)>>{
     let mut landscapes = Vec::with_capacity(k);
     (0..k).for_each(|_| {
         let arr = Vec::new();
@@ -487,6 +500,7 @@ fn handle_down(state: &mut State, event: &Event){
         state.mountains,
         &Direction::Below,
         );
+    // println!("{new_event:?}");
     if let Some(intersection) = new_event{
         handle_intersection(state, intersection);
     }
@@ -498,7 +512,7 @@ fn handle_down(state: &mut State, event: &Event){
 struct State<'a>{
     status: VecDeque<usize>,
     mountains: &'a mut Vec<&'a mut PersistenceMountain>,
-    landscapes: Vec<Vec<(f32,f32)>>,
+    landscapes: Vec<Vec<(f64,f64)>>,
     events: BinaryHeap<Event>,
     k: usize,
     weird_q: VecDeque<Event>
@@ -508,7 +522,7 @@ struct State<'a>{
 ///
 /// Will panic if invalid state is discovered during generation
 #[must_use]
-pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<(f32,f32)>> {
+pub fn generate(bd_pairs: Vec<BirthDeath>, k: usize, debug: bool) -> Vec<Vec<(f64,f64)>> {
     let mut binding = generate_mountains(bd_pairs);
     let mut mountains: Vec<&mut PersistenceMountain> 
         = binding.iter_mut().collect();

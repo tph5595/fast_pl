@@ -18,12 +18,12 @@ use plotters::prelude::*;
 ///
 /// Will error and propogate up on same conditions as panics
 pub fn landscape(
-    landscape: Vec<Vec<(f32,f32)>>,
+    landscape: Vec<Vec<(f64,f64)>>,
     height: u32,
     width: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Set up the data
-    let to_plot: Vec<Vec<(f32, f32)>> = landscape
+    let to_plot: Vec<Vec<(f64, f64)>> = landscape
         .into_iter()
         // .map(|s| s.into_iter().map(|PointOrd { x, y }| (x.0, y.0)).collect())
         .collect();
