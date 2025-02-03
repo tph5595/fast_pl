@@ -8,7 +8,7 @@
 use crate::birthdeath::BirthDeath;
 use float_ord::FloatOrd;
 use geo::{
-    line_intersection::line_intersection, line_intersection::LineIntersection, Coord, Line, coord
+    line_intersection::line_intersection, line_intersection::LineIntersection, Coord, Line
 };
 use std::cmp::min;
 use std::collections::{BinaryHeap, VecDeque};
@@ -162,38 +162,26 @@ fn generate_initial_events(mountains: &Vec<&mut PersistenceMountain>) -> Vec<Eve
         .collect()
 }
 
-const fn current_segment_start(mountain: &PersistenceMountain) -> Coord {
+const fn current_segment_start(mountain: &PersistenceMountain) -> (f64, f64) {
     if mountain.slope_rising {
-        coord!{ 
-            x: mountain.birth.x.0,
-            y: mountain.birth.y.0 
-        }
+            ( mountain.birth.x.0, mountain.birth.y.0 )
     } else { 
-        coord!{ 
-            x: mountain.middle.x.0,
-            y: mountain.middle.y.0 
-        }
+        ( mountain.middle.x.0, mountain.middle.y.0 )
     }
 }
 
-const fn current_segment_end(mountain: &PersistenceMountain) -> Coord {
+const fn current_segment_end(mountain: &PersistenceMountain) -> (f64,f64) {
     if mountain.slope_rising {
-        coord!{ 
-            x: mountain.middle.x.0, 
-            y: mountain.middle.y.0 
-        }
+        ( mountain.middle.x.0, mountain.middle.y.0 )
     } else {
-        coord!{
-            x: mountain.death.x.0, 
-            y: mountain.death.y.0
-        }
+        ( mountain.death.x.0, mountain.death.y.0)
     }
 }
 
-const fn create_line_segment(mountain: &PersistenceMountain) -> Line<f64> {
+fn create_line_segment(mountain: &PersistenceMountain) -> Line<f64> {
     Line {
-        start: current_segment_start(mountain),
-        end: current_segment_end(mountain),
+        start: current_segment_start(mountain).into(),
+        end: current_segment_end(mountain).into(),
     }
 }
 
@@ -327,14 +315,14 @@ fn find_intersection(
 
     if let Some(neighbor) = status.get(neighbor_index) {
         if let Some(intersection) = intersects_with_neighbor(mountains[parent_mountain_id], mountains[*neighbor]) {
-           let intersection = Event {
+            return Some(Event {
                 value: intersection,
                 event_type: EventType::Intersection,
                 parent_mountain_id,
                 parent_mountain2_id: Some(*neighbor),
-            };
+            })
             // println!("{intersection:?}");
-            return Some(intersection);
+            // return Some(intersection);
         }
     }
     None
